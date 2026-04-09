@@ -9,10 +9,13 @@ class Program
     {
         try
         {
-            // Build configuration from appsettings.json and User Secrets
+            // Build configuration from appsettings.json, environment-specific settings and User Secrets
+            // Use Production as default to match ASP.NET Core WebHost/HostBuilder behavior
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
                 .AddUserSecrets<Program>()
                 .Build();
 
