@@ -1,148 +1,81 @@
-# Claude Project Guidelines
+# CLAUDE.md
 
-This document outlines the coding and documentation standards for the Claude API integration project.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 📝 Documentation Standards
+## Project Overview
 
-### Language Requirements
+This is a learning/training project demonstrating Anthropic Claude API integration with two parallel implementations: Python (Jupyter notebook) and .NET (console app).
 
-- **All documentation must be written in English**
-  - README files, code comments, commit messages
-  - API documentation, inline comments
-  - Variable names, function names, class names
-  - Error messages and log output
+## Build & Run Commands
 
-### Link Formatting Standards
+### .NET
 
-- **Use reference-style links in all Markdown files**
-  - Define all links at the top of each document
-  - Use descriptive reference names
-  - Include tooltips for better accessibility
+```bash
+# Set API key (one-time setup)
+dotnet user-secrets set "Anthropic:ApiKey" "your-key" --project dotnet/AnthropicApiClient
 
-**✅ Correct Format:**
+# Build
+dotnet build "dotnet/Claude with Anthropic API.slnx"
+
+# Run (Production - uses Sonnet model by default)
+dotnet run --project dotnet/AnthropicApiClient
+
+# Run in Development (uses Haiku model)
+$env:ASPNETCORE_ENVIRONMENT="Development"
+dotnet run --project dotnet/AnthropicApiClient
+```
+
+### Python
+
+```bash
+cd python
+python -m venv .venv
+.venv/Scripts/activate        # Windows
+pip install requests python-dotenv jupyter
+jupyter notebook 001-requests.ipynb
+```
+
+API key for Python goes in `python/.env` as `ANTHROPIC_API_KEY=your-key`.
+
+## Architecture
+
+### .NET (dotnet/AnthropicApiClient/)
+
+Console app using manual DI setup (no generic host) following ASP.NET Core conventions:
+
+- **Program.cs** — bootstraps `ConfigurationBuilder` + `ServiceCollection`, delegates to `Startup`
+- **Startup.cs** — DI registration (mirrors ASP.NET Core `Startup` pattern)
+- **Application.cs** — business logic entry point, resolved from DI
+- **AnthropicClient.cs** — implements `IAntropicClient`, uses `IHttpClientFactory` + `IOptions<AnthropicOptions>`; posts raw JSON to `https://api.anthropic.com/v1/messages` and returns `JsonDocument`
+- **AnthropicOptions.cs** — typed config bound from `appsettings.json` `"Anthropic"` section; validated on startup
+- **AnthropicMessage.cs** — simple record for request message serialization
+
+**Environment-based model selection** via `ASPNETCORE_ENVIRONMENT`:
+- Production (default): `claude-sonnet-4-5` (`appsettings.json`)
+- Development: `claude-haiku-4-5` (`appsettings.Development.json`)
+
+**Note:** There is a typo in the interface name: `IAntropicClient` (missing 'h') — keep it consistent when editing.
+
+### Python (python/)
+
+Single Jupyter notebook (`001-requests.ipynb`) making direct HTTP calls to the Anthropic API using the `requests` library. No SDK used — raw REST calls for learning purposes.
+
+## Documentation Standards
+
+- **All documentation, code comments, variable/function names, and error messages must be in English.**
+- **Use reference-style links** in all Markdown files — define link references at the top of each file with descriptive names and tooltips. Inline `[text](url)` links are incorrect per project standards.
+
 ```markdown
+<!-- ✅ Correct -->
 [anthropic-console]: https://console.anthropic.com/ "Anthropic Console"
-[dotnet-readme]: dotnet/README.md "Complete .NET Documentation"
+Visit the [Anthropic Console][anthropic-console].
 
-Visit the [Anthropic Console][anthropic-console] to get your API key.
-See the [.NET Documentation][dotnet-readme] for implementation details.
+<!-- ❌ Incorrect -->
+Visit the [Anthropic Console](https://console.anthropic.com/).
 ```
 
-**❌ Incorrect Format:**
-```markdown
-Visit the [Anthropic Console](https://console.anthropic.com/) to get your API key.
-See the [.NET Documentation](dotnet/README.md) for implementation details.
-```
+## Code Standards
 
-### Link Definition Guidelines
-
-1. **Group links by category** at the top of each file:
-   - External services (APIs, documentation sites)
-   - Internal documentation (other README files)
-   - Section anchors within the same document
-
-2. **Use descriptive reference names**:
-   - `[anthropic-console]` instead of `[link1]`
-   - `[python-config]` instead of `[config]`
-   - `[dotnet-examples]` instead of `[examples]`
-
-3. **Include meaningful tooltips**:
-   - `"Anthropic Console"` for external services
-   - `"Python Configuration Guide"` for documentation sections
-   - `"Complete .NET Documentation"` for README files
-
-### Documentation Structure
-
-- **Consistent emoji usage** for section headers
-- **Clear hierarchy** with proper heading levels
-- **Code blocks** with appropriate syntax highlighting
-- **Table of contents** for longer documents
-
-## 💻 Code Standards
-
-### Naming Conventions
-
-- **English names only** for all identifiers
-- **Descriptive names** over abbreviated ones
-- **Follow platform conventions**:
-  - .NET: PascalCase for public members, camelCase for private
-  - Python: snake_case for functions and variables
-
-### Comments and Documentation
-
-- **All code comments in English**
-- **XML documentation** for .NET public APIs
-- **Docstrings** for Python functions and classes
-- **Inline comments** for complex logic explanation
-
-### Configuration and Environment
-
-- **English-only** configuration keys and values
-- **Descriptive environment variable names**
-- **English error messages** and log output
-
-## 🔧 Implementation Examples
-
-### Reference Link Examples
-
-```markdown
-<!-- Link definitions at top of file -->
-[api-docs]: https://docs.anthropic.com/en/api "Anthropic API Documentation"
-[setup-guide]: setup/README.md "Setup and Installation Guide"
-[config-section]: #configuration "Configuration Section"
-
-<!-- Usage in document -->
-Check the [API documentation][api-docs] for rate limits.
-Follow our [setup guide][setup-guide] for quick installation.
-See the [configuration section][config-section] below.
-```
-
-### Code Comment Examples
-
-```csharp
-/// <summary>
-/// Sends a message to Claude API and returns the response.
-/// </summary>
-/// <param name="message">The user message to send</param>
-/// <returns>Claude's response content</returns>
-public async Task<string> SendMessage(string message)
-{
-    // Configure request with current model settings
-    var request = CreateApiRequest(message);
-    
-    // Send to Anthropic API with retry logic
-    return await SendWithRetry(request);
-}
-```
-
-```python
-def create_api_request(message: str) -> dict:
-    """
-    Creates a properly formatted API request for Anthropic Claude.
-    
-    Args:
-        message: The user message to send to Claude
-        
-    Returns:
-        Dictionary containing the formatted API request
-    """
-    # Build request payload with current configuration
-    return build_request_payload(message)
-```
-
-## 🎯 Compliance Checklist
-
-Before committing any documentation changes, ensure:
-
-- [ ] All text is written in English
-- [ ] Reference-style links are used throughout
-- [ ] Link definitions are at the top of the file
-- [ ] Tooltips are provided for all links
-- [ ] Code comments are in English
-- [ ] Variable/function names use English terms
-- [ ] Error messages are in English
-- [ ] Configuration keys use English naming
-
----
-
-**Note**: This document should be updated as the project evolves. All contributors must follow these guidelines to maintain consistency and accessibility.
+- .NET: PascalCase for public members, camelCase for private; XML doc comments on public APIs
+- Python: snake_case; docstrings on functions/classes
+- All code comments in English
