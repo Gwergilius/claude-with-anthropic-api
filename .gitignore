@@ -4,6 +4,7 @@ __pycache__
 .DS_Store
 /*.zip
 /*.bak
+.vs/
 
 # .NET build artifacts
 bin/
