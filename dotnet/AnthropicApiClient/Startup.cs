@@ -19,6 +19,7 @@ public class Startup
         services.AddLogging(builder =>
         {
             builder.AddConsole();
+            builder.AddConfiguration(_configuration.GetSection("Logging"));
         });
         
         // Configure options

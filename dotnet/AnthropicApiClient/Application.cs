@@ -1,4 +1,5 @@
-using System.Text.Json;
+using System.Text;
+using FluentResults;
 using Microsoft.Extensions.Logging;
 
 namespace AnthropicApiClient;
@@ -18,9 +19,9 @@ public class Application(IAntropicClient anthropicClient, ILogger<Application> l
             await SendRequest("What is quantum computing? Answer in one sentence.");
             
             _logger.LogInformation("Making second API call");
-            
+
             // Send second request
-            await SendRequest("What is dependency injection? Answer in one sentence.");
+            await SendRequest("Write another sentence.");
         }
         catch (Exception ex)
         {
@@ -31,22 +32,22 @@ public class Application(IAntropicClient anthropicClient, ILogger<Application> l
 
     private async Task SendRequest(string message)
     {
-        // Send message using the client
-        using JsonDocument response = await _anthropicClient.SendMessage(message);
-        
-        _logger.LogInformation("API request successful!");
-        
-        // Parse the response JSON
-        JsonElement root = response.RootElement;
-        
-        if (root.TryGetProperty("content", out JsonElement contentArray) && contentArray.ValueKind == JsonValueKind.Array)
+        Result<string> result = await _anthropicClient.SendMessage(message);
+
+        if (result.IsFailed)
         {
-            JsonElement firstContent = contentArray[0];
-            if (firstContent.TryGetProperty("text", out JsonElement textElement))
-            {
-                string claudeResponse = textElement.GetString() ?? "";
-                _logger.LogInformation("Claude's response: {Response}", claudeResponse);
-            }
+            _logger.LogError("API request failed: {Errors}", result.Errors);
+            return;
         }
+
+        _logger.LogInformation("API request successful!");
+        _logger.LogInformation("Claude's response: {Response}", result.Value);
+
+        StringBuilder contextDump = new();
+        foreach (AnthropicMessage entry in _anthropicClient.Context)
+        {
+            contextDump.AppendLine(entry.ToString());
+        }
+        _logger.LogInformation("{Context}", contextDump.ToString());
     }
 }

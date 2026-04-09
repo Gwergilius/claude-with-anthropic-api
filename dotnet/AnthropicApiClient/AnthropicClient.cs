@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using FluentResults;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,7 +13,10 @@ public class AnthropicClient(
 {
     private const string ApiUrl = "https://api.anthropic.com/v1/messages";
     private readonly AnthropicOptions _config = InitializeOptions(options, logger);
+    private readonly List<AnthropicMessage> _context = [];
     private bool _disposed = false;
+
+    public IEnumerable<AnthropicMessage> Context => _context;
 
     private static AnthropicOptions InitializeOptions(IOptions<AnthropicOptions> options, ILogger<AnthropicClient> logger)
     {
@@ -43,22 +47,17 @@ public class AnthropicClient(
         return httpClient;
     }
 
-    public async Task<JsonDocument> SendMessage(string message)
+    public async Task<Result<string>> SendMessage(string message)
     {
+        _context.Add(new UserMessage(message));
+
         // Prepare the request data
         var requestData = new
         {
             model = _config.Model,
-            max_tokens = 1000,
-            temperature = 0,
-            messages = new[]
-            {
-                new
-                {
-                    role = "user",
-                    content = message
-                }
-            }
+            max_tokens = _config.MaxTokens,
+            temperature = _config.Temperature,
+            messages = _context
         };
 
         // Serialize request data to JSON
@@ -71,16 +70,23 @@ public class AnthropicClient(
         var httpClient = CreateClient();
         HttpResponseMessage response = await httpClient.PostAsync(ApiUrl, content);
 
-        if (response.IsSuccessStatusCode)
-        {
-            string responseJson = await response.Content.ReadAsStringAsync();
-            return JsonDocument.Parse(responseJson);
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"API request failed with status {response.StatusCode}: {errorContent}");
+            return Result.Fail($"API request failed with status {response.StatusCode}: {errorContent}");
         }
+
+        string responseJson = await response.Content.ReadAsStringAsync();
+        using JsonDocument document = JsonDocument.Parse(responseJson);
+
+        string assistantMessage = document.RootElement
+            .GetProperty("content")[0]
+            .GetProperty("text")
+            .GetString() ?? string.Empty;
+
+        _context.Add(new AssistantMessage(assistantMessage));
+
+        return Result.Ok(assistantMessage);
     }
 
     public void Dispose()

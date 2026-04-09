@@ -1,8 +1,9 @@
-using System.Text.Json;
+using FluentResults;
 
 namespace AnthropicApiClient;
 
 public interface IAntropicClient : IDisposable
 {
-    Task<JsonDocument> SendMessage(string message);
+    IEnumerable<AnthropicMessage> Context { get; }
+    Task<Result<string>> SendMessage(string message);
 }
