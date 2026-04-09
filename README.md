@@ -1,3 +1,13 @@
+[python-readme]: python/README.md "Complete Python Documentation"
+[dotnet-readme]: dotnet/README.md "Complete .NET Documentation" 
+[python-config]: python/README.md#configuration "Python Configuration Guide"
+[dotnet-config]: dotnet/README.md#configuration ".NET Configuration Guide"
+[python-examples]: python/README.md#example-output "Python Example Output"
+[dotnet-examples]: dotnet/README.md#example-output ".NET Example Output"
+[python-dev]: python/README.md#development "Python Development Guide"
+[dotnet-dev]: dotnet/README.md#development ".NET Development Guide"
+[anthropic-console]: https://console.anthropic.com/ "Anthropic Console"
+
 # Claude with Anthropic API
 
 This project demonstrates how to integrate with the Anthropic Claude API using both Python and .NET implementations.
@@ -6,135 +16,111 @@ This project demonstrates how to integrate with the Anthropic Claude API using b
 
 ```
 ├── python/                     # Python implementation
+│   ├── README.md              # Python-specific documentation
 │   ├── 001-requests.ipynb     # Jupyter notebook with API examples
+│   ├── .env                   # Environment variables (API key)
 │   └── .venv/                 # Virtual environment
 ├── dotnet/                     # .NET implementation
+│   ├── README.md              # .NET-specific documentation
 │   ├── Claude with Anthropic API.slnx  # Solution file (.slnx format)
 │   └── AnthropicApiClient/    # Console application
 │       ├── AnthropicApiClient.csproj
-│       ├── Program.cs         # Entry point
+│       ├── Program.cs         # Entry point with environment detection
 │       ├── Application.cs     # Main business logic
 │       ├── AnthropicClient.cs # API client implementation
 │       ├── Startup.cs         # DI configuration
-│       └── appsettings.json   # Configuration file
+│       ├── appsettings.json   # Production configuration (Sonnet)
+│       └── appsettings.Development.json # Development configuration (Haiku)
 └── README.md                  # This file
 ```
 
 ## 🐍 Python Implementation
 
-Located in the `python/` directory.
+A simple, interactive approach using Jupyter notebooks for learning and experimentation.
 
-### Features
-- Jupyter notebook with interactive examples
+**Key Features:**
+- Jupyter notebook with step-by-step examples
 - Direct API calls using requests library
 - Environment variable configuration
+- Interactive development environment
 
-### Setup
+**Quick Start:**
 ```bash
 cd python
 python -m venv .venv
-.venv\Scripts\activate  # Windows
-pip install -r requirements.txt
+.venv\Scripts\activate
+pip install requests python-dotenv jupyter
+jupyter notebook 001-requests.ipynb
 ```
 
-### Usage
-Open `001-requests.ipynb` in Jupyter and run the cells.
+📖 **[Complete Python Documentation][python-readme]**
 
 ## 🔷 .NET Implementation
 
-Located in the `dotnet/` directory.
+Enterprise-grade console application with modern .NET patterns and environment-based configuration.
 
-### Features
-- **.NET 10.0** Console application
-- **C# 13** with modern language features (Primary constructors)
-- **Enterprise-grade architecture**:
-  - Dependency Injection (Microsoft.Extensions.DependencyInjection)
-  - Configuration management (IOptions pattern)
-  - Structured logging (ILogger)
-  - HTTP client factory pattern
-  - User Secrets for API key security
+**Key Features:**
+- .NET 10.0 with C# 13
+- Dependency Injection & IOptions pattern
+- Environment-based configuration (Development/Production)
+- Structured logging & HTTP client factory
+- ASP.NET Core compatible architecture
 
-### Technologies Used
-- .NET 10.0
-- Microsoft.Extensions.* ecosystem (10.0.0 packages)
-- System.Text.Json for JSON serialization
-- HttpClientFactory for HTTP communication
-
-### Setup
+**Quick Start:**
 ```bash
 cd dotnet
-dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project AnthropicApiClient
-dotnet build "Claude with Anthropic API.slnx"
-```
-
-### Usage
-```bash
-cd dotnet
+dotnet user-secrets set "Anthropic:ApiKey" "your-key" --project AnthropicApiClient
 dotnet run --project AnthropicApiClient
 ```
 
-### Architecture
-
-The .NET implementation follows clean architecture principles:
-
-- **Program.cs**: Application bootstrap
-- **Startup.cs**: Dependency injection configuration
-- **Application.cs**: Business logic orchestration
-- **AnthropicClient.cs**: API client with modern .NET patterns
-- **AnthropicOptions.cs**: Configuration model
-- **IAntropicClient.cs**: Interface for testability
+📖 **[Complete .NET Documentation][dotnet-readme]**
 
 ## 🔑 Configuration
 
-Both implementations require an Anthropic API key:
+Both implementations require an Anthropic API key from the [Anthropic Console][anthropic-console].
 
-### Python
-Set environment variable:
-```bash
-export ANTHROPIC_API_KEY="your-api-key-here"
-```
+**Python**: Set `ANTHROPIC_API_KEY` in `.env` file  
+**See**: [Python Configuration Guide][python-config]
 
-### .NET
-Use User Secrets (recommended for development):
-```bash
-dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project dotnet/AnthropicApiClient
-```
+**.NET**: Use User Secrets for secure configuration  
+**See**: [.NET Configuration Guide][dotnet-config]
 
 ## 🚀 Getting Started
 
-1. Get your API key from [Anthropic Console](https://console.anthropic.com/)
+1. Get your API key from [Anthropic Console][anthropic-console]
 2. Choose your preferred implementation (Python or .NET)
 3. Follow the setup instructions above
 4. Run the application and see Claude AI responses!
 
 ## 📋 Example Output
 
-Both implementations make API calls to Claude and display responses for:
-- Question about quantum computing
-- Question about dependency injection
+Both implementations demonstrate API calls to Claude with responses about:
+- Quantum computing concepts
+- Dependency injection patterns
 
-Sample output:
-```
-API request successful!
-Claude's response: Quantum computing is a type of computation that harnesses quantum mechanical phenomena...
+**Python**: Interactive Jupyter notebook with step-by-step examples  
+**See**: [Python Examples][python-examples]
 
-Making second API call
-API request successful!
-Claude's response: Dependency injection is a design pattern where an object receives its dependencies...
-```
+**.NET**: Console output with structured logging and environment-specific models  
+**See**: [.NET Examples][dotnet-examples]
 
 ## 🛠 Development
 
-### .NET Development
-- Uses modern .slnx solution format
-- Configured for C# 13 with .NET 10.0
-- All build artifacts (`bin/`, `obj/`) are git-ignored
-- Follows Microsoft's latest best practices
+Choose your preferred implementation approach:
 
 ### Python Development
-- Uses virtual environment for isolation
-- Jupyter notebook for interactive development
-- Environment variables for configuration
+- **Interactive learning** with Jupyter notebooks
+- **Simple setup** with virtual environments
+- **Immediate feedback** for experimentation
+
+📖 **[Python Development Guide][python-dev]**
+
+### .NET Development
+- **Enterprise architecture** with modern patterns
+- **Environment-based configuration** (Development/Production)
+- **ASP.NET Core compatible** structure
+
+📖 **[.NET Development Guide][dotnet-dev]**
 
 ---
 
