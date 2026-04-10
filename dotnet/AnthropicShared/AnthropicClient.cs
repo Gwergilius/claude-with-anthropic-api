@@ -4,11 +4,11 @@ using FluentResults;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace AnthropicApiClient;
+namespace AnthropicShared;
 
 public class AnthropicClient(
-    IHttpClientFactory httpClientFactory, 
-    IOptions<AnthropicOptions> options, 
+    IHttpClientFactory httpClientFactory,
+    IOptions<AnthropicOptions> options,
     ILogger<AnthropicClient> logger) : IAntropicClient, IDisposable
 {
     private const string ApiUrl = "https://api.anthropic.com/v1/messages";
@@ -22,21 +22,21 @@ public class AnthropicClient(
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
-        
-        // Validate configuration before using it
-        var validatedOptions = options.Value.Validate();
-        
-        logger.LogInformation("API key loaded successfully");
-        logger.LogInformation("Using model: {Model}", validatedOptions.Model);
-        
-        return validatedOptions;
+
+        if(logger!.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("API key loaded successfully");
+            logger.LogInformation("Using model: {Model}", options.Value.Model);
+        }
+
+        return options.Value;
     }
 
     private HttpClient CreateClient() => CreateClient(_config);
     private HttpClient CreateClient(AnthropicOptions config)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
-        
+
         var httpClient = httpClientFactory.CreateClient();
 
         // Set up headers
@@ -59,7 +59,7 @@ public class AnthropicClient(
             ["temperature"] = _config.Temperature,
             ["messages"] = _context
         };
-        if(systemPrompt is { Length: > 0 })
+        if (systemPrompt is { Length: > 0 })
         {
             requestData["system"] = systemPrompt;
         }

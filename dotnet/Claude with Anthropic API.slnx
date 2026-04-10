@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="AnthropicShared\AnthropicShared.csproj" />
   <Project Path="AnthropicApiClient\AnthropicApiClient.csproj" />
+  <Project Path="BlazorChat\BlazorChat.csproj" />
 </Solution>

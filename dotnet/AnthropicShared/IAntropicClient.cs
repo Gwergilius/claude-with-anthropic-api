@@ -1,6 +1,6 @@
 using FluentResults;
 
-namespace AnthropicApiClient;
+namespace AnthropicShared;
 
 public interface IAntropicClient : IDisposable
 {

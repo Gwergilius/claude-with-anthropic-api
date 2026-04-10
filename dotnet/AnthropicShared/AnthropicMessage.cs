@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace AnthropicApiClient;
+namespace AnthropicShared;
 
 public record AnthropicMessage(
     [property: JsonPropertyName("role")] string Role,

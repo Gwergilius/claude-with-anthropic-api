@@ -1,30 +1,25 @@
+using AnthropicShared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace AnthropicApiClient;
 
-public class Startup
+public class Startup(IConfiguration configuration)
 {
-    private readonly IConfiguration _configuration;
-
-    public Startup(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
     public void ConfigureServices(IServiceCollection services)
     {
         // Configure logging
         services.AddLogging(builder =>
         {
             builder.AddConsole();
-            builder.AddConfiguration(_configuration.GetSection("Logging"));
+            builder.AddConfiguration(configuration.GetSection("Logging"));
         });
         
         // Configure options
-        services.Configure<AnthropicOptions>(
-            _configuration.GetSection(AnthropicOptions.SectionName));
+        services.AddOptions<AnthropicOptions>()
+            .Bind(configuration.GetSection(AnthropicOptions.SectionName))
+            .ValidateOnStart();
         
         // Register HttpClientFactory
         services.AddHttpClient();
