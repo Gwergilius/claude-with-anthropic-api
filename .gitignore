@@ -6,6 +6,9 @@ __pycache__
 /*.bak
 .vs/
 
+# Local UI screenshots (not part of the shipped app)
+.screenshots/
+
 # Local-only JSON overrides (machine paths, secrets, CLI allowlists)
 *.local.json
 
