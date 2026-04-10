@@ -5,21 +5,24 @@
 <div class="request-log-accordion @(isOpen ? "request-log-accordion--open" : "")">
     <div id="request-log-panel" class="request-log-accordion__panel" aria-hidden="@(!isOpen)">
         <div class="request-log-accordion__inner">
-            <h2 class="request-log-accordion__title">Request log</h2>
+            <h2 class="request-log-accordion__title">Log</h2>
             <div class="request-log-accordion__scroll" @ref="scrollRef">
                 @if (_snapshot.Count == 0)
                 {
-                    <p class="request-log-accordion__empty">No requests yet. Send a message to see the JSON payload.</p>
+                    <p class="request-log-accordion__empty">No log entries yet. Send a message or wait for API activity.</p>
                 }
                 else
                 {
                     @foreach (var entry in _snapshot)
                     {
-                        <article class="request-log-entry">
-                            <div class="request-log-entry__time">@entry.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")</div>
-                            <div class="request-log-entry__headline">@entry.Headline</div>
-                            <pre class="request-log-entry__body"><code>@entry.FormattedBody</code></pre>
-                        </article>
+                        <button type="button"
+                                class="request-log-entry-row @AnthropicRequestLog.SeverityCssClass(entry.Severity)"
+                                @onclick="() => OpenDetail(entry)"
+                                @onclick:stopPropagation="true">
+                            <span class="request-log-entry-row__time">@entry.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")</span>
+                            <span class="request-log-entry-row__badge @AnthropicRequestLog.SeverityCssClass(entry.Severity)">@AnthropicRequestLog.FormatSeverityLabel(entry.Severity)</span>
+                            <span class="request-log-entry-row__preview" title="@entry.FullMessage">@AnthropicRequestLog.FormatMessagePreview(entry.FullMessage)</span>
+                        </button>
                     }
                 }
             </div>
@@ -30,16 +33,51 @@
             @onclick="Toggle"
             aria-expanded="@isOpen"
             aria-controls="request-log-panel"
-            title="Request log">
+            title="Log">
         <span class="request-log-accordion__chevron" aria-hidden="true">‹</span>
     </button>
 </div>
 
+@if (_selected is { } selectedEntry)
+{
+    <div class="request-log-modal-root">
+        <button type="button" class="request-log-modal-backdrop" @onclick="CloseDetail" aria-label="Close dialog"></button>
+        <div class="request-log-modal" role="dialog" aria-modal="true" aria-labelledby="request-log-modal-title">
+            <h3 id="request-log-modal-title" class="request-log-modal__title">Log entry</h3>
+            <form class="request-log-modal__form" @onsubmit:preventDefault @onclick:stopPropagation="true">
+                <div class="request-log-modal__field">
+                    <label for="log-detail-time">Timestamp</label>
+                    <input id="log-detail-time" type="text" readonly class="request-log-modal__input" value="@selectedEntry.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff zzz")" />
+                </div>
+                <div class="request-log-modal__field">
+                    <label for="log-detail-severity">Severity</label>
+                    <input id="log-detail-severity" type="text" readonly class="request-log-modal__input" value="@AnthropicRequestLog.FormatSeverityLabel(selectedEntry.Severity)" />
+                </div>
+                <div class="request-log-modal__field">
+                    <label for="log-detail-category">Category</label>
+                    <input id="log-detail-category" type="text" readonly class="request-log-modal__input" value="@selectedEntry.Category" />
+                </div>
+                <div class="request-log-modal__field request-log-modal__field--grow">
+                    <label for="log-detail-message">Message</label>
+                    <textarea id="log-detail-message"
+                              readonly
+                              rows="1"
+                              class="request-log-modal__textarea">@selectedEntry.FullMessage</textarea>
+                </div>
+                <div class="request-log-modal__actions">
+                    <button type="button" class="request-log-modal__close" @onclick="CloseDetail">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
 @code {
     private bool isOpen;
     private ElementReference scrollRef;
-    private List<AnthropicRequestLogEntry> _snapshot = [];
+    private List<AppLogEntry> _snapshot = [];
     private bool _scrollAfterRender;
+    private AppLogEntry? _selected;
 
     protected override void OnInitialized()
     {
@@ -62,6 +100,16 @@
     private void RefreshSnapshot()
     {
         _snapshot = [.. RequestLog.GetSnapshot()];
+    }
+
+    private void OpenDetail(AppLogEntry entry)
+    {
+        _selected = entry;
+    }
+
+    private void CloseDetail()
+    {
+        _selected = null;
     }
 
     private void Toggle()

@@ -72,6 +72,10 @@ public class AnthropicClient(
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             logger.LogWarning("Anthropic API error {Status}: {Body}", response.StatusCode, errorContent);
+            requestTelemetry.LogDiagnostic(
+                LogLevel.Warning,
+                $"POST {ApiUrl} → {(int)response.StatusCode} {response.StatusCode}",
+                errorContent);
             return Result.Fail($"API request failed with status {response.StatusCode}: {errorContent}");
         }
 
