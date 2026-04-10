@@ -3,7 +3,7 @@
     {
         <div class="message @(msg.Role == "user" ? "user-message" : "assistant-message")">
             <span class="message-role">@(msg.Role == "user" ? "You" : "AI")</span>
-            <span class="message-content">@msg.Content</span>
+            <div class="message-content">@ChatMarkdown.ToHtml(msg.Content)</div>
         </div>
     }
 
