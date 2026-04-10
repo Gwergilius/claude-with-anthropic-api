@@ -1,0 +1,15 @@
+<div class="chat-input-area">
+    <input @ref="inputRef"
+           @bind="userInput"
+           @bind:event="oninput"
+           @onkeydown="HandleKeyDown"
+           placeholder="Type a message… (use /exit to quit)"
+           disabled="@IsDisabled"
+           class="chat-input"
+           autocomplete="off" />
+    <button @onclick="HandleSend"
+            disabled="@(IsDisabled || string.IsNullOrWhiteSpace(userInput))"
+            class="send-button">
+        Send
+    </button>
+</div>

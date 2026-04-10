@@ -1,13 +1,21 @@
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using BlazorChat;
+var builder = WebApplication.CreateBuilder(args);
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<BlazorChat.App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
-
-var startup = new Startup(builder.Configuration);
+var startup = new BlazorChat.Startup(builder.Configuration);
 startup.ConfigureServices(builder.Services);
 
+var app = builder.Build();
 
-await builder.Build().RunAsync();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseAntiforgery();
+
+app.MapRazorComponents<BlazorChat.App>()
+   .AddInteractiveServerRenderMode();
+
+app.Run();

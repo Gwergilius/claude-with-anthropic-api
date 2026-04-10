@@ -1,138 +1,18 @@
 @page "/"
-@inject IAntropicClient AnthropicClient
-@inject IJSRuntime JS
 
 <PageTitle>Claude Chat</PageTitle>
 
 <div class="chat-wrapper">
-    <header class="chat-header">
-        <h1>Claude Chat</h1>
-    </header>
+    <ChatHistory Messages="AnthropicClient.Context" IsLoading="isLoading" />
 
-    <div class="chat-history" @ref="chatHistoryRef">
-        @foreach (var msg in AnthropicClient.Context)
-        {
-            <div class="message @(msg.Role == "user" ? "user-message" : "assistant-message")">
-                <span class="message-role">@(msg.Role == "user" ? "You" : "Claude")</span>
-                <span class="message-content">@msg.Content</span>
-            </div>
-        }
+    <ChatInput IsDisabled="isLoading" OnSend="HandleSend" />
 
-        @if (isLoading)
-        {
-            <div class="message assistant-message loading">
-                <span class="message-role">Claude</span>
-                <span class="message-content">...</span>
-            </div>
-        }
-
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="message error-message">
-                <span class="message-role">Error</span>
-                <span class="message-content">@errorMessage</span>
-            </div>
-        }
-    </div>
-
-    <div class="chat-input-area">
-        <input @ref="inputRef"
-               @bind="userInput"
-               @bind:event="oninput"
-               @onkeydown="HandleKeyDown"
-               placeholder="Type a message… (use /exit to quit)"
-               disabled="@isLoading"
-               class="chat-input"
-               autocomplete="off" />
-        <button @onclick="HandleSend"
-                disabled="@(isLoading || string.IsNullOrWhiteSpace(userInput))"
-                class="send-button">
-            Send
-        </button>
+    <div class="status-bar">
+        <span class="status-bar__left @(!string.IsNullOrEmpty(errorMessage) ? "status-bar__left--error" : "")">
+            @errorMessage
+        </span>
+        <span class="status-bar__right">
+            @Options.Value.Model &nbsp;·&nbsp; T=@Options.Value.Temperature
+        </span>
     </div>
 </div>
-
-@code {
-    private string userInput = string.Empty;
-    private string errorMessage = string.Empty;
-    private bool isLoading = false;
-    private ElementReference chatHistoryRef;
-    private ElementReference inputRef;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("focusElement", inputRef);
-        }
-    }
-
-    private async Task HandleKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !e.ShiftKey && !isLoading)
-        {
-            await HandleSend();
-        }
-    }
-
-    private async Task HandleSend()
-    {
-        var input = userInput.Trim();
-        if (string.IsNullOrEmpty(input) || isLoading)
-            return;
-
-        userInput = string.Empty;
-        errorMessage = string.Empty;
-
-        // Handle slash commands — not forwarded to the AI
-        if (input.StartsWith('/'))
-        {
-            await HandleCommand(input);
-            return;
-        }
-
-        isLoading = true;
-        StateHasChanged();
-
-        try
-        {
-            var result = await AnthropicClient.SendMessage(input);
-
-            if (result.IsFailed)
-            {
-                errorMessage = string.Join("; ", result.Errors.Select(e => e.Message));
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
-
-        await ScrollToBottom();
-        await JS.InvokeVoidAsync("focusElement", inputRef);
-    }
-
-    private async Task HandleCommand(string rawInput)
-    {
-        var command = rawInput.Split(' ')[0].ToLowerInvariant();
-
-        switch (command)
-        {
-            case "/exit":
-                await JS.InvokeVoidAsync("window.close");
-                break;
-            default:
-                errorMessage = $"Unknown command: {rawInput}";
-                break;
-        }
-    }
-
-    private async Task ScrollToBottom()
-    {
-        await JS.InvokeVoidAsync("scrollToBottom", chatHistoryRef);
-    }
-}
