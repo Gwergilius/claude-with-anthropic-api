@@ -47,18 +47,22 @@ public class AnthropicClient(
         return httpClient;
     }
 
-    public async Task<Result<string>> SendMessage(string message)
+    public async Task<Result<string>> SendMessage(string message, string? systemPrompt = null)
     {
         _context.Add(new UserMessage(message));
 
         // Prepare the request data
-        var requestData = new
+        Dictionary<string, object> requestData = new()
         {
-            model = _config.Model,
-            max_tokens = _config.MaxTokens,
-            temperature = _config.Temperature,
-            messages = _context
+            ["model"] = _config.Model,
+            ["max_tokens"] = _config.MaxTokens,
+            ["temperature"] = _config.Temperature,
+            ["messages"] = _context
         };
+        if(systemPrompt is { Length: > 0 })
+        {
+            requestData["system"] = systemPrompt;
+        }
 
         // Serialize request data to JSON
         string requestJson = JsonSerializer.Serialize(requestData);

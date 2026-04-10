@@ -1,4 +1,3 @@
-using System.Text;
 using FluentResults;
 using Microsoft.Extensions.Logging;
 
@@ -11,43 +10,37 @@ public class Application(IAntropicClient anthropicClient, ILogger<Application> l
 
     public async Task Run()
     {
-        try
+        Console.WriteLine("Claude chat — type 'exit' to quit.");
+        Console.WriteLine();
+        Console.WriteLine("Do you want to specify any system prompt? ");
+        var systemPrompt = Console.ReadLine();
+        if (systemPrompt == null || systemPrompt.Length == 0 || (bool.TryParse(systemPrompt, out var answer) && !answer))
         {
-            _logger.LogInformation("AnthropicClient resolved from DI container");
-            
-            // Send first request
-            await SendRequest("What is quantum computing? Answer in one sentence.");
-            
-            _logger.LogInformation("Making second API call");
-
-            // Send second request
-            await SendRequest("Write another sentence.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred during application execution");
-            throw;
-        }
-    }
-
-    private async Task SendRequest(string message)
-    {
-        Result<string> result = await _anthropicClient.SendMessage(message);
-
-        if (result.IsFailed)
-        {
-            _logger.LogError("API request failed: {Errors}", result.Errors);
-            return;
+            systemPrompt = null;
         }
 
-        _logger.LogInformation("API request successful!");
-        _logger.LogInformation("Claude's response: {Response}", result.Value);
-
-        StringBuilder contextDump = new();
-        foreach (AnthropicMessage entry in _anthropicClient.Context)
+        while (true)
         {
-            contextDump.AppendLine(entry.ToString());
+            Console.Write("You: ");
+            string? input = Console.ReadLine();
+
+            if (input is null || input.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+                break;
+
+            if (string.IsNullOrWhiteSpace(input))
+                continue;
+
+            Result<string> result = await _anthropicClient.SendMessage(input, systemPrompt);
+
+            if (result.IsFailed)
+            {
+                _logger.LogError("API request failed: {Errors}", result.Errors);
+                Console.WriteLine("Error: could not get a response.");
+                continue;
+            }
+
+            Console.WriteLine($"Claude: {result.Value}");
+            Console.WriteLine();
         }
-        _logger.LogInformation("{Context}", contextDump.ToString());
     }
 }
