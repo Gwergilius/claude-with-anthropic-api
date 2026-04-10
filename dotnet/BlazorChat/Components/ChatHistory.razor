@@ -1,0 +1,17 @@
+<div class="chat-history" @ref="historyRef">
+    @foreach (var msg in Messages)
+    {
+        <div class="message @(msg.Role == "user" ? "user-message" : "assistant-message")">
+            <span class="message-role">@(msg.Role == "user" ? "You" : "AI")</span>
+            <span class="message-content">@msg.Content</span>
+        </div>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="message assistant-message loading">
+            <span class="message-role">AI</span>
+            <span class="message-content">...</span>
+        </div>
+    }
+</div>

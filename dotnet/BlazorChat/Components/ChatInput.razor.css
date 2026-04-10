@@ -1,0 +1,56 @@
+/* ── Input bar ───────────────────────────────────── */
+.chat-input-area {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1.5px solid #b8a882;
+    background: #f5f1e8;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    background: #faf8f2;
+    border: 1.5px solid #b8a882;
+    border-radius: 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.92rem;
+    color: #2e2416;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.chat-input::placeholder {
+    color: #9e9080;
+}
+
+.chat-input:focus {
+    border-color: #8a7450;
+    box-shadow: 0 0 0 2px rgba(138, 116, 80, 0.2);
+}
+
+.send-button {
+    padding: 0.55rem 1.1rem;
+    background: #c8b47a;
+    color: #3a2e1e;
+    border: 1.5px solid #a89050;
+    border-radius: 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.send-button:hover:not(:disabled) {
+    background: #b8a060;
+}
+
+.send-button:disabled,
+.chat-input:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

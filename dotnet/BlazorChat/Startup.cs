@@ -1,4 +1,4 @@
-﻿using AnthropicShared;
+using AnthropicShared;
 
 namespace BlazorChat;
 
@@ -6,9 +6,8 @@ public class Startup(IConfiguration configuration)
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        // Logging is fully handled by WebAssemblyHostBuilder.CreateDefault:
-        // it registers WebAssemblyConsoleLoggerProvider and applies log-level settings
-        // from appsettings.json automatically — no explicit AddLogging call needed here.
+        services.AddRazorComponents()
+                .AddInteractiveServerComponents();
 
         services.AddHttpClient();
         services.AddOptions<AnthropicOptions>()

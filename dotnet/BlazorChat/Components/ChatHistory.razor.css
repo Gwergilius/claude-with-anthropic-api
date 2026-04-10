@@ -1,0 +1,103 @@
+/* ── Scrollable history ──────────────────────────── */
+.chat-history {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    font-family: Arial, Helvetica, sans-serif;
+    /* Side padding must exceed the arrow width (14 px) so arrows
+       stay inside the scroll container and are never clipped. */
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ── Shared bubble ───────────────────────────────── */
+.message {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem 0.85rem;
+    background: #eae6d9;
+    border: 1.5px solid #b8a882;
+    border-radius: 4px;
+    word-break: break-word;
+    white-space: pre-wrap;
+    /* reserve space on each side for the directional arrow */
+    margin-right: 14px;
+    margin-left:  14px;
+}
+
+/* ── Arrow — shared base ─────────────────────────── */
+.message::before,
+.message::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+}
+
+/* ── User bubble — right-pointing arrow ──────────── */
+.user-message::before {
+    /* outer triangle = border colour */
+    right: -14px;
+    border-top:    11px solid transparent;
+    border-bottom: 11px solid transparent;
+    border-left:   14px solid #b8a882;
+}
+.user-message::after {
+    /* inner triangle = bubble fill, overlays the border triangle */
+    right: -11px;
+    border-top:    9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-left:   11px solid #eae6d9;
+}
+
+/* ── AI bubble — left-pointing arrow ────────────── */
+.assistant-message::before {
+    left: -14px;
+    border-top:    11px solid transparent;
+    border-bottom: 11px solid transparent;
+    border-right:  14px solid #b8a882;
+}
+.assistant-message::after {
+    left: -11px;
+    border-top:    9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-right:  11px solid #eae6d9;
+}
+
+/* ── Error bubble ────────────────────────────────── */
+.error-message {
+    background: #fff0f0;
+    border-color: #cc8888;
+}
+.error-message::before,
+.error-message::after { display: none; }
+
+/* ── Role label ──────────────────────────────────── */
+.message-role {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #4a3e2e;
+}
+
+/* ── Message text ────────────────────────────────── */
+.message-content {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: #2e2416;
+}
+
+/* ── "..." pulse while waiting ───────────────────── */
+.loading .message-content {
+    animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.25; }
+    50%       { opacity: 1;    }
+}
