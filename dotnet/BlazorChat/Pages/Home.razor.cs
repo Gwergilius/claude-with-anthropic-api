@@ -1,4 +1,5 @@
 using AnthropicShared;
+using BlazorChat.Services;
 using FluentResults;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
@@ -6,14 +7,43 @@ using Microsoft.JSInterop;
 
 namespace BlazorChat.Pages;
 
-public partial class Home
+public partial class Home : IDisposable
 {
     [Inject] private IAntropicClient AnthropicClient { get; set; } = default!;
-    [Inject] private IOptions<AnthropicOptions> Options { get; set; } = default!;
+    [Inject] private IOptionsMonitor<AnthropicOptions> OptionsMonitor { get; set; } = default!;
+    [Inject] private IAnthropicUserSettingsService UserSettings { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private IDisposable? _optionsChangeRegistration;
+
+    /// <summary>Bumped after browser storage is merged so the config subtree remounts with correct field values.</summary>
+    private int _configPanelKey;
+
+    private bool _configPanelRemountedAfterStorage;
 
     private string errorMessage = string.Empty;
     private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        _optionsChangeRegistration = OptionsMonitor.OnChange(_ => InvokeAsync(StateHasChanged));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await UserSettings.EnsureLoadedAsync();
+
+        if (!UserSettings.IsBrowserStorageInitialized || _configPanelRemountedAfterStorage)
+        {
+            return;
+        }
+
+        _configPanelRemountedAfterStorage = true;
+        _configPanelKey++;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => _optionsChangeRegistration?.Dispose();
 
     private async Task HandleSend(string input)
     {
@@ -37,7 +67,9 @@ public partial class Home
 
         try
         {
-            Result<string> result = await AnthropicClient.SendMessage(input);
+            Result<string> result = await AnthropicClient.SendMessage(
+                input,
+                OptionsMonitor.CurrentValue.SystemPrompt);
 
             if (result.IsFailed)
             {

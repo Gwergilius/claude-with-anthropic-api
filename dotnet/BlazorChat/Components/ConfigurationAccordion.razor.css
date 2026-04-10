@@ -1,0 +1,65 @@
+.config-accordion {
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+    align-self: stretch;
+    min-height: 0;
+    background: #e8e2d4;
+    border-right: 1px solid #b8a882;
+}
+
+.config-accordion__tab {
+    width: 2.25rem;
+    flex-shrink: 0;
+    border: none;
+    background: #ddd5c0;
+    cursor: pointer;
+    font-size: 1.35rem;
+    line-height: 1;
+    color: #4a4234;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.config-accordion__tab:hover {
+    background: #d4cbb8;
+}
+
+.config-accordion__chevron {
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+.config-accordion--open .config-accordion__chevron {
+    transform: rotate(180deg);
+}
+
+.config-accordion__panel {
+    width: 0;
+    overflow: hidden;
+    transition: width 0.22s ease;
+    min-height: 0;
+}
+
+.config-accordion--open .config-accordion__panel {
+    width: min(20rem, 85vw);
+}
+
+.config-accordion__inner {
+    width: min(20rem, 85vw);
+    padding: 0.75rem 0.85rem 1rem;
+    box-sizing: border-box;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.config-accordion__title {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #3d362c;
+}

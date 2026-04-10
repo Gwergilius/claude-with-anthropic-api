@@ -1,0 +1,22 @@
+<div class="config-accordion @(isOpen ? "config-accordion--open" : "")">
+    <button type="button"
+            class="config-accordion__tab"
+            @onclick="Toggle"
+            aria-expanded="@isOpen"
+            aria-controls="config-panel"
+            title="Configuration">
+        <span class="config-accordion__chevron" aria-hidden="true">›</span>
+    </button>
+    <div id="config-panel" class="config-accordion__panel" aria-hidden="@(!isOpen)">
+        <div class="config-accordion__inner">
+            <h2 class="config-accordion__title">Configuration</h2>
+            <AnthropicConfigurationForm />
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isOpen;
+
+    private void Toggle() => isOpen = !isOpen;
+}

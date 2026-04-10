@@ -1,0 +1,60 @@
+.anthropic-config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.88rem;
+    color: #3d362c;
+}
+
+.anthropic-config-form__label {
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.anthropic-config-form__hint {
+    font-weight: 400;
+    color: #7a6e5f;
+}
+
+.anthropic-config-form__select,
+.anthropic-config-form__textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    border: 1px solid #b8a882;
+    border-radius: 2px;
+    background: #faf8f3;
+    color: #2c2820;
+}
+
+.anthropic-config-form__select {
+    padding: 0.35rem 0.4rem;
+}
+
+.anthropic-config-form__textarea {
+    padding: 0.45rem 0.5rem;
+    resize: vertical;
+    min-height: 5rem;
+}
+
+.anthropic-config-form__range {
+    width: 100%;
+    accent-color: #7a6b52;
+}
+
+.anthropic-config-form__save {
+    margin-top: 0.5rem;
+    padding: 0.45rem 0.65rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #8a7d64;
+    border-radius: 2px;
+    background: #d4cbb8;
+    color: #2c2820;
+}
+
+.anthropic-config-form__save:hover {
+    background: #c9bfaa;
+}

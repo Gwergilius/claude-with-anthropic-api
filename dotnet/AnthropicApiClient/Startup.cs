@@ -23,6 +23,8 @@ public class Startup(IConfiguration configuration)
         
         // Register HttpClientFactory
         services.AddHttpClient();
+
+        services.AddSingleton<IAnthropicRequestTelemetry, NullAnthropicRequestTelemetry>();
         
         // Register AnthropicClient as a service
         services.AddTransient<IAntropicClient, AnthropicClient>();

@@ -1,0 +1,98 @@
+@implements IDisposable
+@inject AnthropicRequestLog RequestLog
+@inject IJSRuntime JS
+
+<div class="request-log-accordion @(isOpen ? "request-log-accordion--open" : "")">
+    <div id="request-log-panel" class="request-log-accordion__panel" aria-hidden="@(!isOpen)">
+        <div class="request-log-accordion__inner">
+            <h2 class="request-log-accordion__title">Request log</h2>
+            <div class="request-log-accordion__scroll" @ref="scrollRef">
+                @if (_snapshot.Count == 0)
+                {
+                    <p class="request-log-accordion__empty">No requests yet. Send a message to see the JSON payload.</p>
+                }
+                else
+                {
+                    @foreach (var entry in _snapshot)
+                    {
+                        <article class="request-log-entry">
+                            <div class="request-log-entry__time">@entry.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")</div>
+                            <div class="request-log-entry__headline">@entry.Headline</div>
+                            <pre class="request-log-entry__body"><code>@entry.FormattedBody</code></pre>
+                        </article>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <button type="button"
+            class="request-log-accordion__tab"
+            @onclick="Toggle"
+            aria-expanded="@isOpen"
+            aria-controls="request-log-panel"
+            title="Request log">
+        <span class="request-log-accordion__chevron" aria-hidden="true">‹</span>
+    </button>
+</div>
+
+@code {
+    private bool isOpen;
+    private ElementReference scrollRef;
+    private List<AnthropicRequestLogEntry> _snapshot = [];
+    private bool _scrollAfterRender;
+
+    protected override void OnInitialized()
+    {
+        RequestLog.Changed += OnLogChanged;
+        RefreshSnapshot();
+    }
+
+    public void Dispose()
+    {
+        RequestLog.Changed -= OnLogChanged;
+    }
+
+    private void OnLogChanged()
+    {
+        RefreshSnapshot();
+        _scrollAfterRender = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void RefreshSnapshot()
+    {
+        _snapshot = [.. RequestLog.GetSnapshot()];
+    }
+
+    private void Toggle()
+    {
+        isOpen = !isOpen;
+        if (isOpen)
+        {
+            _scrollAfterRender = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollAfterRender)
+        {
+            return;
+        }
+
+        _scrollAfterRender = false;
+
+        if (_snapshot.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync("scrollToBottom", scrollRef);
+        }
+        catch (JSException)
+        {
+        }
+    }
+}

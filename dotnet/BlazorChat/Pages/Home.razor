@@ -2,17 +2,25 @@
 
 <PageTitle>Claude Chat</PageTitle>
 
-<div class="chat-wrapper">
-    <ChatHistory Messages="AnthropicClient.Context" IsLoading="isLoading" />
+<div class="home-chat-layout">
+    <div class="home-chat-layout__main">
+        <ConfigurationAccordion @key="_configPanelKey" />
 
-    <ChatInput IsDisabled="isLoading" OnSend="HandleSend" />
+        <div class="chat-wrapper">
+            <ChatHistory Messages="AnthropicClient.Context" IsLoading="isLoading" />
+
+            <ChatInput IsDisabled="isLoading" OnSend="HandleSend" />
+        </div>
+
+        <RequestLogAccordion />
+    </div>
 
     <div class="status-bar">
         <span class="status-bar__left @(!string.IsNullOrEmpty(errorMessage) ? "status-bar__left--error" : "")">
             @errorMessage
         </span>
         <span class="status-bar__right">
-            @Options.Value.Model &nbsp;·&nbsp; T=@Options.Value.Temperature
+            @OptionsMonitor.CurrentValue.Model &nbsp;·&nbsp; T=@OptionsMonitor.CurrentValue.Temperature.ToString("0.##")
         </span>
     </div>
 </div>

@@ -1,0 +1,85 @@
+@inject IAnthropicUserSettingsService UserSettings
+
+<div class="anthropic-config-form">
+    <label class="anthropic-config-form__label" for="cfg-model">Claude model</label>
+    <select id="cfg-model"
+            class="anthropic-config-form__select"
+            value="@_edit.Model"
+            @onchange="OnModelChange">
+        @foreach (var m in _modelChoices)
+        {
+            <option value="@m">@m</option>
+        }
+    </select>
+
+    <label class="anthropic-config-form__label" for="cfg-temp">
+        Temperature <span class="anthropic-config-form__hint">@_edit.Temperature.ToString("0.00")</span>
+    </label>
+    <input id="cfg-temp"
+           type="range"
+           class="anthropic-config-form__range"
+           min="0"
+           max="1"
+           step="0.01"
+           value="@_edit.Temperature"
+           @oninput="OnTemperatureInput" />
+
+    <label class="anthropic-config-form__label" for="cfg-system">System prompt</label>
+    <textarea id="cfg-system"
+              class="anthropic-config-form__textarea"
+              rows="5"
+              @bind="_edit.SystemPrompt"
+              @bind:event="oninput"
+              @bind:after="ApplyLive"></textarea>
+
+    <button type="button" class="anthropic-config-form__save" @onclick="SaveToStorageAsync">
+        Save to browser
+    </button>
+</div>
+
+@code {
+    private AnthropicUserSettingsDto _edit = new();
+    private List<string> _modelChoices = [];
+
+    protected override void OnInitialized()
+    {
+        _edit = UserSettings.GetEditingSnapshot();
+        BuildModelChoices();
+        // @bind:after does not run on initial render — push visible form state into options so Send uses the same text as the textarea.
+        UserSettings.ApplyLive(_edit);
+    }
+
+    private void BuildModelChoices()
+    {
+        _modelChoices = AnthropicModelCatalog.Models.ToList();
+        if (!string.IsNullOrWhiteSpace(_edit.Model)
+            && !_modelChoices.Contains(_edit.Model, StringComparer.Ordinal))
+        {
+            _modelChoices.Add(_edit.Model);
+        }
+
+        _modelChoices.Sort(StringComparer.Ordinal);
+    }
+
+    private void OnModelChange(ChangeEventArgs e)
+    {
+        _edit.Model = e.Value?.ToString() ?? string.Empty;
+        ApplyLive();
+    }
+
+    private void OnTemperatureInput(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var t))
+        {
+            _edit.Temperature = t;
+            ApplyLive();
+        }
+    }
+
+    private void ApplyLive() => UserSettings.ApplyLive(_edit);
+
+    private async Task SaveToStorageAsync()
+    {
+        await UserSettings.SaveAsync(_edit);
+    }
+}
