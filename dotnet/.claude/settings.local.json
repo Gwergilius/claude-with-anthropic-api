@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where inkscape:*)",
+      "Bash(where magick:*)",
+      "Bash(where convert:*)",
+      "Bash(where node:*)",
+      "Bash(where ffmpeg:*)",
+      "Bash(magick -background none -size 192x192 'D:/OneDrive - Personal/OneDrive/Source/Trainings/AI/Claude with Anthropic API/dotnet/BlazorChat/wwwroot/blazor.svg' -resize 192x192 'D:/OneDrive - Personal/OneDrive/Source/Trainings/AI/Claude with Anthropic API/dotnet/BlazorChat/wwwroot/icon-192.png')",
+      "Bash(magick -background none -size 512x512 'D:/OneDrive - Personal/OneDrive/Source/Trainings/AI/Claude with Anthropic API/dotnet/BlazorChat/wwwroot/blazor.svg' -resize 512x512 'D:/OneDrive - Personal/OneDrive/Source/Trainings/AI/Claude with Anthropic API/dotnet/BlazorChat/wwwroot/icon-512.png')",
+      "Bash(ls:*)",
+      "Bash(dotnet user-secrets:*)",
+      "Bash(dotnet run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://localhost:5001)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000)",
+      "Skill(run)",
+      "Bash(tasklist /FI \"PID eq 14800\")",
+      "Bash(tasklist /FI \"IMAGENAME eq BlazorChat.exe\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell:*)",
+      "Bash(awk '{print $5}')"
+    ]
+  }
+}
