@@ -2,9 +2,9 @@
 [dotnet-readme]: dotnet/README.md "Complete .NET Documentation" 
 [python-config]: python/README.md#configuration "Python Configuration Guide"
 [dotnet-config]: dotnet/README.md#configuration ".NET Configuration Guide"
-[python-examples]: python/README.md#example-output "Python Example Output"
+[python-examples]: python/README.md "Complete Python Documentation"
 [dotnet-examples]: dotnet/README.md#example-output ".NET Example Output"
-[python-dev]: python/README.md#development "Python Development Guide"
+[python-dev]: python/README.md "Python Development Guide"
 [dotnet-dev]: dotnet/README.md#development ".NET Development Guide"
 [anthropic-console]: https://console.anthropic.com/ "Anthropic Console"
 
@@ -17,7 +17,9 @@ This project demonstrates how to integrate with the Anthropic Claude API using b
 ```
 ├── python/                     # Python implementation
 │   ├── README.md              # Python-specific documentation
-│   ├── 001-requests.ipynb     # Jupyter notebook with API examples
+│   ├── claude_client.py       # Shared Python client utilities
+│   ├── examples.py            # Example conversation script
+│   ├── chat_cli.py            # Interactive terminal chat
 │   ├── .env                   # Environment variables (API key)
 │   └── .venv/                 # Virtual environment
 ├── dotnet/                     # .NET implementation
@@ -36,21 +38,21 @@ This project demonstrates how to integrate with the Anthropic Claude API using b
 
 ## 🐍 Python Implementation
 
-A simple, interactive approach using Jupyter notebooks for learning and experimentation.
+A simple script-based approach for learning and experimentation.
 
 **Key Features:**
-- Jupyter notebook with step-by-step examples
-- Direct API calls using requests library
+- Shared Anthropic client utilities
+- Example and interactive terminal entry points
 - Environment variable configuration
-- Interactive development environment
+- Straightforward local script execution
 
 **Quick Start:**
 ```bash
 cd python
 python -m venv .venv
 .venv\Scripts\activate
-pip install requests python-dotenv jupyter
-jupyter notebook 001-requests.ipynb
+pip install -r requirements.txt
+python examples.py
 ```
 
 📖 **[Complete Python Documentation][python-readme]**
@@ -98,7 +100,7 @@ Both implementations demonstrate API calls to Claude with responses about:
 - Quantum computing concepts
 - Dependency injection patterns
 
-**Python**: Interactive Jupyter notebook with step-by-step examples  
+**Python**: Traditional Python scripts with example and chat entry points  
 **See**: [Python Examples][python-examples]
 
 **.NET**: Console output with structured logging and environment-specific models  
@@ -109,9 +111,9 @@ Both implementations demonstrate API calls to Claude with responses about:
 Choose your preferred implementation approach:
 
 ### Python Development
-- **Interactive learning** with Jupyter notebooks
+- **Simple script workflow** without notebook-specific input issues
+- **Shared client module** for reuse across examples and chat
 - **Simple setup** with virtual environments
-- **Immediate feedback** for experimentation
 
 📖 **[Python Development Guide][python-dev]**
 
