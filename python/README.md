@@ -1,28 +1,25 @@
 [anthropic-console]: https://console.anthropic.com/ "Anthropic Console"
 [main-readme]: ../README.md "Main Project README"
-[jupyter-docs]: https://jupyter.org/ "Jupyter Documentation"
-
 # Python Implementation - Claude with Anthropic API
 
 This is the Python implementation of the Claude API integration project.
 
-## 🐍 Features
+## Features
 
-- **Jupyter notebook** with interactive examples
-- **Direct API calls** using requests library
-- **Environment variable** configuration
-- **Simple and straightforward** approach for learning
+- Traditional Python scripts instead of a notebook workflow
+- Anthropic SDK integration with conversation context management
+- Environment variable configuration through `.env`
+- Separate entry points for examples and interactive terminal chat
 
-## 🛠 Requirements
+## Requirements
 
-- Python 3.8+
-- Jupyter Notebook or JupyterLab
-- `requests` library
-- `python-dotenv` library
+- Python 3.10+
+- `anthropic`
+- `python-dotenv`
 
-## ⚙️ Setup
+## Setup
 
-1. **Create and activate virtual environment**:
+1. Create and activate a virtual environment:
    ```bash
    python -m venv .venv
    .venv\Scripts\activate  # Windows
@@ -30,123 +27,66 @@ This is the Python implementation of the Claude API integration project.
    source .venv/bin/activate  # macOS/Linux
    ```
 
-2. **Install required packages**:
+2. Install dependencies:
    ```bash
-   pip install requests python-dotenv jupyter
+   pip install -r requirements.txt
    ```
 
-3. **Set your API key** in the `.env` file:
+3. Set your API key and model in `.env`:
    ```bash
    ANTHROPIC_API_KEY=your-api-key-here
+   ANTHROPIC_MODEL=claude-haiku-4-5
    ```
 
-## 🚀 Usage
+## Usage
 
-1. **Start Jupyter**:
-   ```bash
-   jupyter notebook
-   # or
-   jupyter lab
-   ```
+Run the two-turn example conversation:
 
-2. **Open the notebook**:
-   - Navigate to `001-requests.ipynb`
-   - Run the cells to see the API integration examples
-
-## 📋 Example Code
-
-The notebook contains examples of:
-
-### Basic API Call
-```python
-import requests
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-api_key = os.getenv('ANTHROPIC_API_KEY')
-url = "https://api.anthropic.com/v1/messages"
-
-headers = {
-    "Content-Type": "application/json",
-    "x-api-key": api_key,
-    "anthropic-version": "2023-06-01"
-}
-
-payload = {
-    "model": "claude-3-5-sonnet-20241022",
-    "max_tokens": 200,
-    "messages": [
-        {
-            "role": "user",
-            "content": "What is quantum computing?"
-        }
-    ]
-}
-
-response = requests.post(url, json=payload, headers=headers)
-result = response.json()
-print(result["content"][0]["text"])
+```bash
+python examples.py
 ```
 
-### Multiple Model Testing
-The notebook demonstrates how to:
-- Compare different Claude models
-- Handle API responses
-- Error handling and debugging
-- Response time measurement
+Run the interactive terminal chat:
 
-## 🔑 Configuration
+```bash
+python chat_cli.py
+```
+
+## Files
+
+- `claude_client.py` contains settings loading, immutable message types, and the chat client wrapper.
+- `examples.py` runs the same example prompts that were previously in the notebook.
+- `chat_cli.py` provides a normal terminal-based chat loop.
+- `requirements.txt` lists the Python dependencies.
+
+## Configuration
 
 Create a `.env` file in the python directory:
-```
+
+```text
 ANTHROPIC_API_KEY=your-api-key-here
+ANTHROPIC_MODEL=claude-haiku-4-5
 ```
 
-**Get your API key from**: [Anthropic Console][anthropic-console]
+Get your API key from the [Anthropic Console][anthropic-console].
 
-## 📋 Example Output
+## Project Structure
 
-```
-API Response:
-Quantum computing is a type of computation that harnesses quantum mechanical phenomena 
-like superposition and entanglement to process information in ways that can solve 
-certain complex problems much faster than classical computers.
-
-Response time: 1.2 seconds
-Model used: claude-3-5-sonnet-20241022
-```
-
-## 🛠 Development
-
-### Interactive Development
-- **Jupyter notebook** for step-by-step exploration
-- **Live code cells** for immediate feedback
-- **Markdown documentation** embedded with code
-- **Easy experimentation** with different prompts and models
-
-### Environment Management
-- **Virtual environment** for isolation
-- **Environment variables** for secure API key storage
-- **Simple dependency management** with pip
-
-## 📁 Project Structure
-
-```
+```text
 python/
-├── .env                    # Environment variables (API key)
-├── 001-requests.ipynb     # Main Jupyter notebook with examples
-└── .venv/                 # Virtual environment (created during setup)
+├── .env
+├── README.md
+├── chat_cli.py
+├── claude_client.py
+├── examples.py
+└── requirements.txt
 ```
 
-## 💡 Tips
+## Tips
 
-- **Start with the notebook**: It's designed for learning and experimentation
-- **Modify the prompts**: Try different questions and see how Claude responds
-- **Compare models**: Experiment with different Claude models to see performance differences
-- **Check rate limits**: Be mindful of API rate limits during development
+- Use `examples.py` when you want a deterministic smoke test.
+- Use `chat_cli.py` when you want interactive input without notebook input issues.
+- Change `ANTHROPIC_MODEL` in `.env` to compare supported Claude models.
 
 ---
 

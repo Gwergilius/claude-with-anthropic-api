@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a learning/training project demonstrating Anthropic Claude API integration with two parallel implementations: Python (Jupyter notebook) and .NET (console app).
+This is a learning/training project demonstrating Anthropic Claude API integration with two parallel implementations: Python (traditional scripts) and .NET (console app).
 
 ## Build & Run Commands
 
@@ -31,8 +31,8 @@ dotnet run --project dotnet/AnthropicApiClient
 cd python
 python -m venv .venv
 .venv/Scripts/activate        # Windows
-pip install requests python-dotenv jupyter
-jupyter notebook 001-requests.ipynb
+pip install -r requirements.txt
+python examples.py
 ```
 
 API key for Python goes in `python/.env` as `ANTHROPIC_API_KEY=your-key`.
@@ -58,7 +58,7 @@ Console app using manual DI setup (no generic host) following ASP.NET Core conve
 
 ### Python (python/)
 
-Single Jupyter notebook (`001-requests.ipynb`) making direct HTTP calls to the Anthropic API using the `requests` library. No SDK used — raw REST calls for learning purposes.
+Traditional Python scripts using the Anthropic SDK. `claude_client.py` contains the reusable client and context model, `examples.py` runs the sample prompts, and `chat_cli.py` provides interactive terminal chat.
 
 ## Documentation Standards
 
