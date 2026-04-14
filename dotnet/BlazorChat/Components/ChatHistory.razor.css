@@ -175,3 +175,30 @@
     0%, 100% { opacity: 0.25; }
     50%       { opacity: 1;    }
 }
+
+/* ── Streaming: Stop control on pending assistant bubble ─ */
+.message.assistant-message.pending-stream {
+    padding-bottom: 2.1rem;
+}
+
+.message .stream-stop {
+    position: absolute;
+    right: 0.45rem;
+    bottom: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #2e2416;
+    background: #f5f0e4;
+    border: 1px solid #9a8a6a;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.message .stream-stop:hover {
+    background: #ebe4d4;
+}
+
+.message .stream-stop:active {
+    background: #e0d8c8;
+}

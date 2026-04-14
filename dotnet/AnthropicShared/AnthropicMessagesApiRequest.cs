@@ -21,4 +21,9 @@ internal sealed class AnthropicMessagesApiRequest
     [JsonPropertyName("system")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? System { get; init; }
+
+    /// <summary>When true, the API returns an SSE stream instead of a single JSON body.</summary>
+    [JsonPropertyName("stream")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Stream { get; init; }
 }

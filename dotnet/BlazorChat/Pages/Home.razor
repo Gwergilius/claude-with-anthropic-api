@@ -7,9 +7,13 @@
         <ConfigurationAccordion @key="_configPanelKey" />
 
         <div class="chat-wrapper">
-            <ChatHistory Messages="AnthropicClient.Context" IsLoading="isLoading" />
+            <ChatHistory
+                Messages="AnthropicClient.Context"
+                IsAwaitingHttp="_isAwaitingHttp"
+                StreamPending="_isReadingStream"
+                OnStopStreaming="HandleStopStreaming" />
 
-            <ChatInput IsDisabled="isLoading" OnSend="HandleSend" />
+            <ChatInput IsDisabled="IsChatBusy" OnSend="HandleSend" />
         </div>
 
         <RequestLogAccordion />

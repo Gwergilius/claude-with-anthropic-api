@@ -13,6 +13,7 @@ public partial class Home : IDisposable
     [Inject] private IOptionsMonitor<AnthropicOptions> OptionsMonitor { get; set; } = default!;
     [Inject] private IAnthropicUserSettingsService UserSettings { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private IAnthropicStreamProgressService StreamProgress { get; set; } = default!;
 
     private IDisposable? _optionsChangeRegistration;
 
@@ -22,11 +23,30 @@ public partial class Home : IDisposable
     private bool _configPanelRemountedAfterStorage;
 
     private string errorMessage = string.Empty;
-    private bool isLoading = false;
+    private bool _isAwaitingHttp;
+    private bool _isReadingStream;
+    private CancellationTokenSource? _activeRequestCts;
+    private TaskCompletionSource<AnthropicStreamCompletedEventArgs>? _streamDoneTcs;
+    private AnthropicStreamingResponse? _pendingResponse;
+
+    private bool IsChatBusy => _isAwaitingHttp || _isReadingStream;
 
     protected override void OnInitialized()
     {
         _optionsChangeRegistration = OptionsMonitor.OnChange(_ => InvokeAsync(StateHasChanged));
+        StreamProgress.ProgressChanged += OnStreamProgressChanged;
+        StreamProgress.ProgressCompleted += OnStreamProgressCompleted;
+    }
+
+    public void Dispose()
+    {
+        _optionsChangeRegistration?.Dispose();
+        StreamProgress.ProgressChanged -= OnStreamProgressChanged;
+        StreamProgress.ProgressCompleted -= OnStreamProgressCompleted;
+        StreamProgress.Cancel();
+        _activeRequestCts?.Cancel();
+        _activeRequestCts?.Dispose();
+        _pendingResponse?.Dispose();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -43,7 +63,30 @@ public partial class Home : IDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose() => _optionsChangeRegistration?.Dispose();
+    private void OnStreamProgressChanged(object? sender, AnthropicStreamDeltaEventArgs e)
+    {
+        _ = InvokeAsync(() =>
+        {
+            AnthropicClient.AppendLastAssistantMessageText(e.DeltaText);
+            StateHasChanged();
+        });
+    }
+
+    private void OnStreamProgressCompleted(object? sender, AnthropicStreamCompletedEventArgs e)
+    {
+        _streamDoneTcs?.TrySetResult(e);
+
+        _ = InvokeAsync(() =>
+        {
+            _isReadingStream = false;
+            if (e.Reason == AnthropicStreamCompletionReason.Faulted)
+            {
+                errorMessage = e.ErrorMessage ?? "The response stream failed.";
+            }
+
+            StateHasChanged();
+        });
+    }
 
     private async Task HandleSend(string input)
     {
@@ -63,18 +106,44 @@ public partial class Home : IDisposable
     {
         errorMessage = string.Empty;
 
-        isLoading = true;
+        StreamProgress.Cancel();
+        _activeRequestCts?.Cancel();
+        _activeRequestCts?.Dispose();
+        _pendingResponse?.Dispose();
+        _pendingResponse = null;
+
+        _activeRequestCts = new CancellationTokenSource();
+        var ct = _activeRequestCts.Token;
+
+        _isAwaitingHttp = true;
+        StateHasChanged();
 
         try
         {
-            Result<string> result = await AnthropicClient.SendMessage(
+            Result<AnthropicStreamingResponse> result = await AnthropicClient.StartStreamingMessageAsync(
                 input,
-                OptionsMonitor.CurrentValue.SystemPrompt);
+                OptionsMonitor.CurrentValue.SystemPrompt,
+                ct);
 
             if (result.IsFailed)
             {
                 errorMessage = string.Join("; ", result.Errors.Select(e => e.Message));
+                return;
             }
+
+            _pendingResponse = result.Value;
+            _isAwaitingHttp = false;
+            _isReadingStream = true;
+            StateHasChanged();
+
+            _streamDoneTcs = new TaskCompletionSource<AnthropicStreamCompletedEventArgs>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            StreamProgress.Start(_pendingResponse.Body, ct);
+            await _streamDoneTcs.Task;
+        }
+        catch (OperationCanceledException)
+        {
+            // Stop button or navigation — optional user-facing message suppressed
         }
         catch (Exception ex)
         {
@@ -82,8 +151,20 @@ public partial class Home : IDisposable
         }
         finally
         {
-            isLoading = false;
+            _isAwaitingHttp = false;
+            _isReadingStream = false;
+            _pendingResponse?.Dispose();
+            _pendingResponse = null;
+            _activeRequestCts?.Dispose();
+            _activeRequestCts = null;
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void HandleStopStreaming()
+    {
+        _activeRequestCts?.Cancel();
+        StreamProgress.Cancel();
     }
 
     private async Task HandleCommand(string rawInput)
