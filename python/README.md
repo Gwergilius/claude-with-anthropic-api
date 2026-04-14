@@ -1,5 +1,9 @@
 [anthropic-console]: https://console.anthropic.com/ "Anthropic Console"
 [main-readme]: ../README.md "Main Project README"
+[gh-codespaces-secrets]: https://docs.github.com/en/codespaces/setting-your-user-preferences/managing-your-account-specific-secrets-for-github-codespaces "Managing your account-specific secrets for GitHub Codespaces"
+[gh-codespaces-variables]: https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/configuring-dev-containers/specifying-recommended-secrets-for-a-repository "GitHub Codespaces repository variables"
+[gh-dotfiles]: https://docs.github.com/en/codespaces/setting-your-user-preferences/personalizing-github-codespaces-for-your-account#dotfiles "Personalizing Codespaces with dotfiles"
+[devcontainer-spec]: https://containers.dev/implementors/json_reference/ "Dev Container JSON reference"
 # Python Implementation - Claude with Anthropic API
 
 This is the Python implementation of the Claude API integration project.
@@ -34,8 +38,8 @@ This is the Python implementation of the Claude API integration project.
 
 3. Set your API key and model in `.env`:
    ```bash
-   ANTHROPIC_API_KEY=your-api-key-here
-   ANTHROPIC_MODEL=claude-haiku-4-5
+   Anthropic__ApiKey=your-api-key-here
+   Anthropic__Model=claude-haiku-4-5
    ```
 
 ## Usage
@@ -61,14 +65,53 @@ python chat_cli.py
 
 ## Configuration
 
+### Local development
+
 Create a `.env` file in the python directory:
 
 ```text
-ANTHROPIC_API_KEY=your-api-key-here
-ANTHROPIC_MODEL=claude-haiku-4-5
+Anthropic__ApiKey=your-api-key-here
+Anthropic__Model=claude-haiku-4-5
 ```
 
 Get your API key from the [Anthropic Console][anthropic-console].
+
+### GitHub Codespaces
+
+In Codespaces the `.env` file is not needed — use GitHub's built-in mechanisms instead.
+
+**API key (secret, sensitive)**
+
+Store it as a [user-level Codespace secret][gh-codespaces-secrets] so it is available across all your repositories without duplication:
+
+1. GitHub profile → **Settings** → **Codespaces** → **New secret**
+2. Name: `Anthropic__ApiKey`, Value: your key
+3. Under **Repository access** select the repositories that may use it
+
+**Non-sensitive config (model, etc.)**
+
+Two options depending on scope:
+
+| Scope | Mechanism | How |
+|---|---|---|
+| This repo only | `devcontainer.json` `remoteEnv` | Commit the values — they are versioned with the project |
+| All your repos | [Dotfiles repo][gh-dotfiles] | Export variables from `~/.bashrc` in your personal `dotfiles` repo |
+
+Example `.devcontainer/devcontainer.json` entry for repo-scoped defaults:
+
+```json
+{
+  "remoteEnv": {
+    "Anthropic__Model": "claude-haiku-4-5"
+  }
+}
+```
+
+Example `~/.bashrc` snippet in a [dotfiles repo][gh-dotfiles] for global defaults:
+
+```bash
+export Anthropic__Model="claude-haiku-4-5"
+```
 
 ## Project Structure
 
@@ -86,7 +129,7 @@ python/
 
 - Use `examples.py` when you want a deterministic smoke test.
 - Use `chat_cli.py` when you want interactive input without notebook input issues.
-- Change `ANTHROPIC_MODEL` in `.env` to compare supported Claude models.
+- Change `Anthropic__Model` in `.env` to compare supported Claude models.
 
 ---
 

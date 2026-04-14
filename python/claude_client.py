@@ -24,12 +24,12 @@ def load_settings(env_path: Path | None = None) -> AnthropicSettings:
     resolved_env_path = env_path or Path(__file__).with_name(".env")
     load_dotenv(resolved_env_path)
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
+    api_key = os.getenv("Anthropic__ApiKey")
+    model = os.getenv("Anthropic__Model", "claude-sonnet-4-5")
 
     if not api_key:
         raise ValueError(
-            "ANTHROPIC_API_KEY not found. Set it in python/.env or the environment."
+            "Anthropic__ApiKey not found. Set it in python/.env or as an environment variable."
         )
 
     return AnthropicSettings(api_key=api_key, model=model)

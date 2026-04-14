@@ -1,6 +1,9 @@
 [anthropic-console]: https://console.anthropic.com/ "Anthropic Console"
 [main-readme]: ../README.md "Main Project README"
 [user-secrets]: https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets "ASP.NET Core User Secrets"
+[gh-codespaces-secrets]: https://docs.github.com/en/codespaces/setting-your-user-preferences/managing-your-account-specific-secrets-for-github-codespaces "Managing your account-specific secrets for GitHub Codespaces"
+[gh-dotfiles]: https://docs.github.com/en/codespaces/setting-your-user-preferences/personalizing-github-codespaces-for-your-account#dotfiles "Personalizing Codespaces with dotfiles"
+[gh-actions-secrets]: https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions "Using secrets in GitHub Actions"
 
 # .NET Implementation - Claude with Anthropic API
 
@@ -86,10 +89,63 @@ The .NET implementation uses environment-based configuration with **Production a
 - Model: `claude-haiku-4-5` (fast and cost-effective)
 - Used when `ASPNETCORE_ENVIRONMENT=Development`
 
-**API Key Configuration** ([User Secrets][user-secrets], recommended):
+**API Key Configuration** ([User Secrets][user-secrets], recommended for local dev):
 ```bash
 dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project AnthropicApiClient
+dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project BlazorChat
 ```
+
+### GitHub Codespaces
+
+`dotnet user-secrets` is a local-only mechanism. In Codespaces, use GitHub's native secrets instead — the .NET configuration system reads environment variables automatically, resolving `__` as the hierarchy separator (`Anthropic__ApiKey` → `Anthropic:ApiKey`).
+
+**API key (secret, sensitive)**
+
+Store it as a [user-level Codespace secret][gh-codespaces-secrets] so it is available across all your repositories without duplication:
+
+1. GitHub profile → **Settings** → **Codespaces** → **New secret**
+2. Name: `Anthropic__ApiKey`, Value: your key
+3. Under **Repository access** select the repositories that may use it
+
+**Non-sensitive config (model, etc.)**
+
+Two options depending on scope:
+
+| Scope | Mechanism | How |
+|---|---|---|
+| This repo only | `devcontainer.json` `remoteEnv` | Commit the values — they are versioned with the project |
+| All your repos | [Dotfiles repo][gh-dotfiles] | Export variables from `~/.bashrc` in your personal `dotfiles` repo |
+
+Example `.devcontainer/devcontainer.json` entry for repo-scoped defaults:
+
+```json
+{
+  "remoteEnv": {
+    "Anthropic__Model": "claude-haiku-4-5"
+  }
+}
+```
+
+### GitHub Actions (CI/CD)
+
+For E2E tests or any pipeline step that calls the API, store the key as a [repository Actions secret][gh-actions-secrets] and inject it via the `env:` block using the same `__` naming convention:
+
+```yaml
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    env:
+      Anthropic__ApiKey: ${{ secrets.ANTHROPIC_API_KEY }}
+      ASPNETCORE_ENVIRONMENT: Development
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - run: dotnet test "Claude with Anthropic API.slnx"
+```
+
+No `dotnet user-secrets` call is needed — `IConfiguration` picks up the environment variable automatically.
 
 ## 📋 Example Output
 
