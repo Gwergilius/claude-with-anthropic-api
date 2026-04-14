@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a learning/training project demonstrating Anthropic Claude API integration with three parallel implementations: Python (Jupyter notebook), a .NET console app, and a Blazor Server chat UI. All three share the same `AnthropicShared` class library.
+This is a learning/training project demonstrating Anthropic Claude API integration with three parallel implementations: Python (Jupyter notebook + traditional scripts), a .NET console app, and a Blazor Server chat UI. All three .NET projects share the same `AnthropicShared` class library.
 
 ## Build & Run Commands
 
@@ -47,7 +47,13 @@ ASPNETCORE_ENVIRONMENT=Development dotnet run --project dotnet/AnthropicApiClien
 cd python
 python -m venv .venv
 .venv/Scripts/activate        # Windows
-pip install requests python-dotenv jupyter
+pip install -r requirements.txt
+
+# Traditional scripts
+python examples.py            # sample prompts
+python chat_cli.py            # interactive terminal chat
+
+# Jupyter notebook
 jupyter notebook 001-requests.ipynb
 ```
 
@@ -63,7 +69,10 @@ dotnet/
   AnthropicApiClient/   — console app
   BlazorChat/           — Blazor Server chat UI
 python/
-  001-requests.ipynb    — raw HTTP calls to Anthropic API (no SDK)
+  001-requests.ipynb    — Jupyter notebook, raw HTTP calls (no SDK)
+  claude_client.py      — reusable SDK client with context management
+  chat_cli.py           — interactive terminal chat
+  examples.py           — sample prompts
 ```
 
 ### AnthropicShared (class library)
@@ -113,6 +122,12 @@ Interactive Server rendering. Entry point is `Program.cs` → `Startup.Configure
 **Environment-based model selection** via `ASPNETCORE_ENVIRONMENT`:
 - Production (default): `claude-sonnet-4-5` (`appsettings.json`)
 - Development: `claude-haiku-4-5` (`appsettings.Development.json`); also enables `Trace`-level SSE event logging for `AnthropicStreamProgressService`.
+
+### Python (python/)
+
+Two complementary approaches:
+- **`001-requests.ipynb`** — Jupyter notebook for quick experimentation with raw HTTP calls (no SDK).
+- **`claude_client.py`** — reusable SDK-based client with context management; `examples.py` runs sample prompts; `chat_cli.py` provides interactive terminal chat.
 
 ## Documentation Standards
 
