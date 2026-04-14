@@ -3,36 +3,93 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+import textwrap
 from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
 
 
-@dataclass(frozen=True)
-class AnthropicSettings:
-    """Application settings loaded from environment variables."""
+class AnthropicConfig:
+    """Anthropic API configuration, loaded lazily from environment variables.
 
-    api_key: str
-    model: str
+    Reads the following keys from the .env file (or the process environment):
 
+    - ``Anthropic__ApiKey``      (required)
+    - ``Anthropic__Model``       (default: ``claude-sonnet-4-5``)
+    - ``Anthropic__ApiVersion``  (default: ``2023-06-01``)
+    - ``Anthropic__MaxTokens``   (default: ``1000``)
+    - ``Anthropic__Temperature`` (default: ``0``)
+    - ``Anthropic__WordWrap``    (default: ``120``)
+    """
 
-def load_settings(env_path: Path | None = None) -> AnthropicSettings:
-    """Load Anthropic settings from a .env file and process environment."""
+    def __init__(self, env_path: Path | None = None):
+        self._env_path = env_path or Path(__file__).with_name(".env")
+        self._api_key: str | None = None
+        self._model: str | None = None
+        self._api_version: str | None = None
+        self._max_tokens: int | None = None
+        self._temperature: float | None = None
+        self._word_wrap: int | None = None
+        self._loaded = False
 
-    resolved_env_path = env_path or Path(__file__).with_name(".env")
-    load_dotenv(resolved_env_path)
+    def _ensure_loaded(self) -> None:
+        if self._loaded:
+            return
+        load_dotenv(self._env_path)
+        api_key = os.getenv("Anthropic__ApiKey")
+        if not api_key:
+            raise ValueError(
+                "Anthropic__ApiKey not found. Set it in python/.env or as an environment variable."
+            )
+        self._api_key = api_key
+        self._model = os.getenv("Anthropic__Model", "claude-sonnet-4-5")
+        self._api_version = os.getenv("Anthropic__ApiVersion", "2023-06-01")
+        self._max_tokens = int(os.getenv("Anthropic__MaxTokens", "1000"))
+        self._temperature = float(os.getenv("Anthropic__Temperature", "0"))
+        self._word_wrap = int(os.getenv("Anthropic__WordWrap", "120"))
+        self._loaded = True
 
-    api_key = os.getenv("Anthropic__ApiKey")
-    model = os.getenv("Anthropic__Model", "claude-sonnet-4-5")
+    @property
+    def api_key(self) -> str:
+        self._ensure_loaded()
+        return self._api_key  # type: ignore[return-value]
 
-    if not api_key:
-        raise ValueError(
-            "Anthropic__ApiKey not found. Set it in python/.env or as an environment variable."
-        )
+    @property
+    def model(self) -> str:
+        self._ensure_loaded()
+        return self._model  # type: ignore[return-value]
 
-    return AnthropicSettings(api_key=api_key, model=model)
+    @property
+    def api_version(self) -> str:
+        self._ensure_loaded()
+        return self._api_version  # type: ignore[return-value]
+
+    @property
+    def max_tokens(self) -> int:
+        self._ensure_loaded()
+        return self._max_tokens  # type: ignore[return-value]
+
+    @property
+    def temperature(self) -> float:
+        self._ensure_loaded()
+        return self._temperature  # type: ignore[return-value]
+
+    @property
+    def word_wrap(self) -> int:
+        self._ensure_loaded()
+        return self._word_wrap  # type: ignore[return-value]
+
+    def __str__(self) -> str:
+        self._ensure_loaded()
+        lines = []
+        for name, member in type(self).__dict__.items():
+            if isinstance(member, property) and not name.startswith("_"):
+                value = getattr(self, name)
+                if name == "api_key":
+                    value = value[:8] + "..."
+                lines.append(f"{name}: {value}")
+        return "\n".join(lines)
 
 
 class ImmutableDict(dict):
@@ -100,10 +157,20 @@ class AssistantMessage(AnthropicMessage):
 class AnthropicClient(anthropic.Anthropic):
     """Anthropic SDK client with model configuration and context management."""
 
-    def __init__(self, api_key: str, model: str):
-        super().__init__(api_key=api_key)
-        self.model = model
+    def __init__(self, config: AnthropicConfig):
+        super().__init__(api_key=config.api_key)
+        self._config = config
         self._context: list[AnthropicMessage] = []
+
+    @classmethod
+    def create(cls, env_path: Path | None = None) -> "AnthropicClient":
+        """Create a client instance from environment settings (factory method)."""
+
+        return cls(config=AnthropicConfig(env_path=env_path))
+
+    @property
+    def model(self) -> str:
+        return self._config.model
 
     @property
     def context(self) -> tuple[AnthropicMessage, ...]:
@@ -125,9 +192,9 @@ class AnthropicClient(anthropic.Anthropic):
         print(f"Sending {len(self._context)} messages to Claude")
 
         response = self.messages.create(
-            model=self.model,
-            max_tokens=1000,
-            temperature=0,
+            model=self._config.model,
+            max_tokens=self._config.max_tokens,
+            temperature=self._config.temperature,
             messages=self._context,
         )
 
@@ -149,13 +216,12 @@ class AnthropicClient(anthropic.Anthropic):
         print("-" * 50)
 
         for index, message in enumerate(self._context, start=1):
-            print(f"{index}. {message.role.title()}: {message.content}")
+            prefix = f"{index}. {message.role.title()}: "
+            print(textwrap.fill(
+                message.content,
+                width=self._config.word_wrap,
+                initial_indent=prefix,
+                subsequent_indent=" " * len(prefix),
+            ))
 
         print("-" * 50)
-
-
-def create_client(env_path: Path | None = None) -> AnthropicClient:
-    """Create a configured Anthropic client from environment settings."""
-
-    settings = load_settings(env_path=env_path)
-    return AnthropicClient(api_key=settings.api_key, model=settings.model)

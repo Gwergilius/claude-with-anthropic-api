@@ -1,15 +1,14 @@
 """Interactive terminal chat for Claude."""
 
-from claude_client import create_client, load_settings
+from claude_client import AnthropicClient
 
 
 def main() -> None:
     """Start an interactive console chat loop."""
 
-    settings = load_settings()
-    client = create_client()
+    client = AnthropicClient.create()
 
-    print(f"Using model: {settings.model}")
+    print(f"Using model: {client.model}")
     print("Claude chat - type 'exit' to quit.")
     print()
 
