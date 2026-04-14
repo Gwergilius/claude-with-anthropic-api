@@ -4,25 +4,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a learning/training project demonstrating Anthropic Claude API integration with two parallel implementations: Python (traditional scripts) and .NET (console app).
+This is a learning/training project demonstrating Anthropic Claude API integration with three parallel implementations: Python (Jupyter notebook + traditional scripts), a .NET console app, and a Blazor Server chat UI. All three .NET projects share the same `AnthropicShared` class library.
 
 ## Build & Run Commands
 
-### .NET
+### Solution
+
+```bash
+# Build everything
+dotnet build "dotnet/Claude with Anthropic API.slnx"
+```
+
+### BlazorChat (primary UI)
+
+```bash
+# Set API key (one-time setup)
+dotnet user-secrets set "Anthropic:ApiKey" "your-key" --project dotnet/BlazorChat
+
+# Run (Production — uses Sonnet model)
+dotnet run --project dotnet/BlazorChat
+
+# Run in Development (uses Haiku model, enables SSE trace logging)
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project dotnet/BlazorChat
+```
+
+### Console app (AnthropicApiClient)
 
 ```bash
 # Set API key (one-time setup)
 dotnet user-secrets set "Anthropic:ApiKey" "your-key" --project dotnet/AnthropicApiClient
 
-# Build
-dotnet build "dotnet/Claude with Anthropic API.slnx"
-
 # Run (Production - uses Sonnet model by default)
 dotnet run --project dotnet/AnthropicApiClient
 
 # Run in Development (uses Haiku model)
-$env:ASPNETCORE_ENVIRONMENT="Development"
-dotnet run --project dotnet/AnthropicApiClient
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project dotnet/AnthropicApiClient
 ```
 
 ### Python
@@ -32,33 +48,86 @@ cd python
 python -m venv .venv
 .venv/Scripts/activate        # Windows
 pip install -r requirements.txt
-python examples.py
+
+# Traditional scripts
+python examples.py            # sample prompts
+python chat_cli.py            # interactive terminal chat
+
+# Jupyter notebook
+jupyter notebook 001-requests.ipynb
 ```
 
 API key for Python goes in `python/.env` as `ANTHROPIC_API_KEY=your-key`.
 
 ## Architecture
 
-### .NET (dotnet/AnthropicApiClient/)
+### Solution layout
 
-Console app using manual DI setup (no generic host) following ASP.NET Core conventions:
+```
+dotnet/
+  AnthropicShared/      — shared class library (client, options, types)
+  AnthropicApiClient/   — console app
+  BlazorChat/           — Blazor Server chat UI
+python/
+  001-requests.ipynb    — Jupyter notebook, raw HTTP calls (no SDK)
+  claude_client.py      — reusable SDK client with context management
+  chat_cli.py           — interactive terminal chat
+  examples.py           — sample prompts
+```
 
-- **Program.cs** — bootstraps `ConfigurationBuilder` + `ServiceCollection`, delegates to `Startup`
-- **Startup.cs** — DI registration (mirrors ASP.NET Core `Startup` pattern)
-- **Application.cs** — business logic entry point, resolved from DI
-- **AnthropicClient.cs** — implements `IAntropicClient`, uses `IHttpClientFactory` + `IOptions<AnthropicOptions>`; posts raw JSON to `https://api.anthropic.com/v1/messages` and returns `JsonDocument`
-- **AnthropicOptions.cs** — typed config bound from `appsettings.json` `"Anthropic"` section; validated on startup
-- **AnthropicMessage.cs** — simple record for request message serialization
+### AnthropicShared (class library)
+
+Shared between both .NET projects. Key types:
+
+- **`IAntropicClient`** — conversation interface; holds rolling `Context` (user+assistant turns), exposes `SendMessage` (blocking) and `StartStreamingMessageAsync` (SSE). Note: intentional typo — missing 'h' in `IAntropicClient`. Keep consistent.
+- **`AnthropicClient`** — implements the above. Uses `IHttpClientFactory` + `IOptionsMonitor<AnthropicOptions>` (monitor, not snapshot, so live config updates take effect). Streaming path uses `HttpCompletionOption.ResponseHeadersRead` and returns an `AnthropicStreamingResponse` (owns both the `HttpResponseMessage` and body `Stream` — caller must dispose).
+- **`AnthropicStreamingResponse`** — thin wrapper: owns `HttpResponseMessage` + `Stream`, implements `IDisposable`.
+- **`AnthropicOptions`** — typed config from `"Anthropic"` appsettings section: `ApiKey`, `Model`, `ApiVersion`, `MaxTokens`, `Temperature`, `SystemPrompt`.
+- **`AnthropicMessagesApiRequest`** — internal; maps to the POST `/v1/messages` JSON body.
+- **`IAnthropicRequestTelemetry`** / **`NullAnthropicRequestTelemetry`** — observer interface for outgoing requests (used by BlazorChat's log panel; no-op in the console app).
+
+### AnthropicApiClient (console app)
+
+Manual DI setup (no generic host) following ASP.NET Core conventions:
+
+- **Program.cs** — `ConfigurationBuilder` + `ServiceCollection`, delegates to `Startup`
+- **Startup.cs** — DI registration
+- **Application.cs** — business logic entry point resolved from DI
+
+### BlazorChat (Blazor Server UI)
+
+Interactive Server rendering. Entry point is `Program.cs` → `Startup.ConfigureServices`.
+
+**DI lifetimes (important):**
+- `IAntropicClient` / `AnthropicClient` — **Singleton**: conversation context persists for the app lifetime.
+- `RuntimeAnthropicOptions` — **Singleton**: registered as both `IOptions<AnthropicOptions>` and `IOptionsMonitor<AnthropicOptions>`; merges appsettings baseline with live browser overrides from the config panel.
+- `AnthropicRequestLog` — **Singleton**: in-memory ring buffer (max 100 entries) for the dev log panel, also registered as `IAnthropicRequestTelemetry`.
+- `IAnthropicUserSettingsService` / `IAnthropicStreamProgressService` — **Scoped** (per circuit).
+
+**Streaming flow:**
+1. `Home.razor.cs` calls `IAntropicClient.StartStreamingMessageAsync` → gets `AnthropicStreamingResponse`.
+2. Passes `response.Body` stream to `IAnthropicStreamProgressService.Start(stream, ct)`.
+3. `AnthropicStreamProgressService` reads SSE lines on a background task, raises `ProgressChanged` (per `content_block_delta`) and `ProgressCompleted` (on `message_stop`, fault, or cancel).
+4. `Home.razor.cs` calls `AnthropicClient.AppendLastAssistantMessageText(delta)` on each delta event, then awaits `_streamDoneTcs.Task` for completion.
+
+**Configuration panel** (`AnthropicConfigurationForm.razor`):
+- Settings (model, temperature, system prompt) are persisted to browser `localStorage` via `IAnthropicUserSettingsService`.
+- On load, browser overrides are merged into `RuntimeAnthropicOptions` via `MergePersistedOverrides`.
+- Live changes call `RuntimeAnthropicOptions.ApplyFormState`, which notifies `IOptionsMonitor` listeners so `Home.razor.cs` re-renders.
+
+**Slash commands** (typed into the chat input, not sent to the API):
+- `/exit` — closes the browser window
+- `/error [msg]` — injects a test error message into the UI
 
 **Environment-based model selection** via `ASPNETCORE_ENVIRONMENT`:
 - Production (default): `claude-sonnet-4-5` (`appsettings.json`)
-- Development: `claude-haiku-4-5` (`appsettings.Development.json`)
-
-**Note:** There is a typo in the interface name: `IAntropicClient` (missing 'h') — keep it consistent when editing.
+- Development: `claude-haiku-4-5` (`appsettings.Development.json`); also enables `Trace`-level SSE event logging for `AnthropicStreamProgressService`.
 
 ### Python (python/)
 
-Traditional Python scripts using the Anthropic SDK. `claude_client.py` contains the reusable client and context model, `examples.py` runs the sample prompts, and `chat_cli.py` provides interactive terminal chat.
+Two complementary approaches:
+- **`001-requests.ipynb`** — Jupyter notebook for quick experimentation with raw HTTP calls (no SDK).
+- **`claude_client.py`** — reusable SDK-based client with context management; `examples.py` runs sample prompts; `chat_cli.py` provides interactive terminal chat.
 
 ## Documentation Standards
 
@@ -79,3 +148,4 @@ Visit the [Anthropic Console](https://console.anthropic.com/).
 - .NET: PascalCase for public members, camelCase for private; XML doc comments on public APIs
 - Python: snake_case; docstrings on functions/classes
 - All code comments in English
+- Error returns use `FluentResults` (`Result<T>`) — not exceptions — in `AnthropicShared`

@@ -42,5 +42,7 @@ public class Startup(IConfiguration configuration)
 
         // Register as Singleton so conversation context persists for the lifetime of the app
         services.AddSingleton<IAntropicClient, AnthropicClient>();
+
+        services.AddScoped<IAnthropicStreamProgressService, AnthropicStreamProgressService>();
     }
 }

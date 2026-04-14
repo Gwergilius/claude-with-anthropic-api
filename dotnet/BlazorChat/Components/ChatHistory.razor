@@ -1,13 +1,20 @@
 <div class="chat-history" @ref="historyRef">
-    @foreach (var msg in Messages)
+    @for (var i = 0; i < _messages.Count; i++)
     {
-        <div class="message @(msg.Role == "user" ? "user-message" : "assistant-message")">
+        var msg = _messages[i];
+        var isPendingAssistant = StreamPending && i == _messages.Count - 1 && msg.Role == "assistant";
+
+        <div class="message @(msg.Role == "user" ? "user-message" : "assistant-message") @(isPendingAssistant ? "pending-stream" : null)">
             <span class="message-role">@(msg.Role == "user" ? "You" : "AI")</span>
             <div class="message-content">@ChatMarkdown.ToHtml(msg.Content)</div>
+            @if (isPendingAssistant)
+            {
+                <button type="button" class="stream-stop" @onclick="OnStopStreaming">Stop</button>
+            }
         </div>
     }
 
-    @if (IsLoading)
+    @if (IsAwaitingHttp)
     {
         <div class="message assistant-message loading">
             <span class="message-role">AI</span>

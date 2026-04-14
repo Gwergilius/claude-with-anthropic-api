@@ -92,6 +92,103 @@ public class AnthropicClient(
         return Result.Ok(assistantMessage);
     }
 
+    public async Task<Result<AnthropicStreamingResponse>> StartStreamingMessageAsync(
+        string message,
+        string? systemPrompt = null,
+        CancellationToken cancellationToken = default)
+    {
+        var config = optionsMonitor.CurrentValue;
+
+        _context.Add(new UserMessage(message));
+
+        var explicitSystem = string.IsNullOrWhiteSpace(systemPrompt) ? null : systemPrompt.Trim();
+        var fromOptions = string.IsNullOrWhiteSpace(config.SystemPrompt) ? null : config.SystemPrompt.Trim();
+        var effectiveSystem = explicitSystem ?? fromOptions;
+
+        var body = new AnthropicMessagesApiRequest
+        {
+            Model = config.Model,
+            MaxTokens = config.MaxTokens,
+            Temperature = config.Temperature,
+            Messages = _context,
+            System = effectiveSystem,
+            Stream = true
+        };
+
+        string requestJson = JsonSerializer.Serialize(body, RequestJsonOptions);
+        requestTelemetry.LogOutgoingRequest("POST", ApiUrl, requestJson);
+
+        using var content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+        using var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl) { Content = content };
+
+        var httpClient = CreateClient(config);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return Result.Fail("Request cancelled.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Anthropic streaming request failed before response headers");
+            return Result.Fail($"Request failed: {ex.Message}");
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            try
+            {
+                string errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                var status = response.StatusCode;
+                logger.LogWarning("Anthropic API error {Status}: {Body}", status, errorContent);
+                requestTelemetry.LogDiagnostic(
+                    LogLevel.Warning,
+                    $"POST {ApiUrl} → {(int)status} {status}",
+                    errorContent);
+                return Result.Fail($"API request failed with status {status}: {errorContent}");
+            }
+            finally
+            {
+                response.Dispose();
+            }
+        }
+
+        Stream stream;
+        try
+        {
+            stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            response.Dispose();
+            logger.LogError(ex, "Failed to open Anthropic response stream");
+            return Result.Fail($"Failed to open response stream: {ex.Message}");
+        }
+
+        _context.Add(new AssistantMessage(""));
+        return Result.Ok(new AnthropicStreamingResponse(response, stream));
+    }
+
+    public void AppendLastAssistantMessageText(string delta)
+    {
+        if (string.IsNullOrEmpty(delta) || _context.Count == 0)
+        {
+            return;
+        }
+
+        if (_context[^1] is AssistantMessage am)
+        {
+            _context[^1] = new AssistantMessage(am.Content + delta);
+        }
+    }
+
     public void Dispose()
     {
         Dispose(true);
