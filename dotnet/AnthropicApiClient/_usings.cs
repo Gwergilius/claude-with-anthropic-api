@@ -1,5 +1,0 @@
-global using AnthropicShared;
-global using FluentResults;
-global using Microsoft.Extensions.Configuration;
-global using Microsoft.Extensions.DependencyInjection;
-global using Microsoft.Extensions.Logging;
