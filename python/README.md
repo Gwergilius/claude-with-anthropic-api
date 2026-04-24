@@ -10,10 +10,12 @@ This is the Python implementation of the Claude API integration project.
 
 ## Features
 
-- Traditional Python scripts instead of a notebook workflow
-- Anthropic SDK integration with conversation context management
+- Stateful SDK client with rolling conversation context
+- Stateless SDK wrapper for single-turn prompt evaluation calls
+- Prompt evaluation pipeline: template rendering → Claude → LLM-as-judge grading → HTML report
+- Dataset generation via Claude for automated test case creation
 - Environment variable configuration through `.env`
-- Separate entry points for examples and interactive terminal chat
+- Separate entry points for examples, interactive chat, and evaluation notebooks
 
 ## Requirements
 
@@ -56,12 +58,44 @@ Run the interactive terminal chat:
 python chat_cli.py
 ```
 
+Run the prompt evaluation pipeline (Jupyter):
+
+```bash
+jupyter notebook 002-prompt-evaluation.ipynb
+```
+
 ## Files
 
-- `claude_client.py` contains settings loading, immutable message types, and the chat client wrapper.
-- `examples.py` runs the same example prompts that were previously in the notebook.
-- `chat_cli.py` provides a normal terminal-based chat loop.
-- `requirements.txt` lists the Python dependencies.
+### Client modules
+
+- `anthropic_config.py` — `AnthropicConfig` singleton: reads `Anthropic__*` env vars from `.env`, provides lazy-loaded `client` and `model` properties.
+- `anthropic_client.py` — stateless thin wrapper around the Anthropic SDK; no conversation context; used by `grader.py` and `prompt_runner.py`.
+- `anthropic_message.py` — immutable `AnthropicMessage` dataclass (role + content).
+- `claude_client.py` — stateful SDK client with rolling conversation context; also contains settings loading.
+- `immutable_dict.py` — `ImmutableDict` type used for prompt inputs.
+
+### Evaluation helpers
+
+- `grader.py` — `LlmGrader`: LLM-as-judge helper; scores a `(test_case, output)` pair via Claude; returns score + reasoning.
+- `prompt_runner.py` — `PromptRunner`: fills `{key}` template placeholders and calls Claude; returns raw output.
+- `dataset.json` — evaluation dataset; shared with the `PromptEvaluator` .NET project via `Content Include` in `.csproj`.
+
+### Entry points
+
+- `examples.py` — runs the same example prompts that were previously in the notebook.
+- `chat_cli.py` — interactive terminal-based chat loop.
+
+### Notebooks
+
+- `001-requests.ipynb` — raw HTTP calls (no SDK), quick experimentation.
+- `001_prompt_evals_complete.ipynb` — complete prompt evaluation walkthrough (all-in-one reference).
+- `002-prompt-evaluation.ipynb` — end-to-end evaluation pipeline: render prompts → call Claude → grade → write report.
+- `003_dataset_generator.ipynb` — generates `dataset.json` via Claude (diverse test cases for a given task).
+- `003_prompting.ipynb` — prompting technique experiments.
+
+### Other
+
+- `requirements.txt` — Python dependencies.
 
 ## Configuration
 
@@ -117,12 +151,24 @@ export Anthropic__Model="claude-haiku-4-5"
 
 ```text
 python/
-├── .env
+├── .env                            # API key and model config
 ├── README.md
-├── chat_cli.py
-├── claude_client.py
-├── examples.py
-└── requirements.txt
+├── requirements.txt
+├── claude_client.py                # Stateful SDK client (conversation context)
+├── anthropic_client.py             # Stateless SDK wrapper
+├── anthropic_config.py             # Config singleton (lazy env var loading)
+├── anthropic_message.py            # Immutable AnthropicMessage dataclass
+├── examples.py                     # Two-turn example conversation
+├── chat_cli.py                     # Interactive terminal chat
+├── grader.py                       # LLM-as-judge grader helper
+├── prompt_runner.py                # Prompt template runner
+├── immutable_dict.py               # ImmutableDict type for prompt inputs
+├── dataset.json                    # Evaluation dataset (shared with .NET)
+├── 001-requests.ipynb              # Raw HTTP calls (no SDK)
+├── 001_prompt_evals_complete.ipynb # Complete evaluation walkthrough
+├── 002-prompt-evaluation.ipynb     # End-to-end evaluation pipeline
+├── 003_dataset_generator.ipynb     # Dataset generation via Claude
+└── 003_prompting.ipynb             # Prompting technique experiments
 ```
 
 ## Tips
@@ -130,6 +176,8 @@ python/
 - Use `examples.py` when you want a deterministic smoke test.
 - Use `chat_cli.py` when you want interactive input without notebook input issues.
 - Change `Anthropic__Model` in `.env` to compare supported Claude models.
+- Run `003_dataset_generator.ipynb` first to regenerate `dataset.json` before re-running the evaluation pipeline.
+- `dataset.json` is shared with the `PromptEvaluator` .NET project — changes here are automatically picked up on the next .NET build.
 
 ---
 

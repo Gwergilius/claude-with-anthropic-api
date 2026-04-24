@@ -11,15 +11,19 @@ This is the .NET implementation of the Claude API integration project.
 
 ## 🔷 Features
 
-- **.NET 10.0** Console application
-- **C# 13** with modern language features (Primary constructors)
+- **.NET 10.0** with **C# 14** (Primary constructors, collection expressions)
 - **Enterprise-grade architecture**:
   - Dependency Injection (Microsoft.Extensions.DependencyInjection)
-  - Configuration management (IOptions pattern)
+  - Configuration management (IOptions / IOptionsMonitor pattern)
   - Environment-based configuration (Development vs Production)
   - Structured logging (ILogger)
   - HTTP client factory pattern
   - User Secrets for API key security
+- **Prompt Evaluation** (PromptEvaluator project):
+  - YAML-driven prompt configuration with `{key}` placeholder templating
+  - JSON dataset linked from the Python notebook output
+  - LLM-as-judge grading with bounded concurrency
+  - HTML + JSON evaluation reports
 
 ## 🛠 Technologies Used
 
@@ -34,6 +38,8 @@ This is the .NET implementation of the Claude API integration project.
 2. **Set your API key** using User Secrets:
    ```bash
    dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project AnthropicApiClient
+   dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project BlazorChat
+   dotnet user-secrets set "Anthropic:ApiKey" "your-api-key-here" --project PromptEvaluator
    ```
 3. **Build the solution**:
    ```bash
@@ -57,24 +63,54 @@ dotnet run
 
 ## 🏗 Architecture
 
-The .NET implementation follows clean architecture principles with environment-based configuration:
+### Shared Library (AnthropicShared)
 
-**Core Components:**
-- **Program.cs**: Application bootstrap with environment detection
-- **Startup.cs**: Dependency injection configuration
-- **Application.cs**: Business logic orchestration  
-- **AnthropicClient.cs**: API client with modern .NET patterns
-- **AnthropicOptions.cs**: Configuration model
-- **IAntropicClient.cs**: Interface for testability
+Core types used by all three .NET projects:
 
-**Configuration Files:**
-- **appsettings.json**: Production settings (Sonnet model)
-- **appsettings.Development.json**: Development settings (Haiku model)
+- **`IAntropicClient`** — conversation interface: rolling `Context`, `SendMessage` (blocking), `StartStreamingMessageAsync` (SSE)
+- **`AnthropicClient`** — HTTP implementation using `IHttpClientFactory` + `IOptionsMonitor<AnthropicOptions>`
+- **`AnthropicOptions`** — typed config from the `"Anthropic"` section: `ApiKey`, `Model`, `MaxTokens`, `Temperature`, `SystemPrompt`
 
-**Environment Strategy:**
-- **Production** (Default): High-quality responses with Sonnet model  
+### AnthropicApiClient (console app)
+
+Manual DI setup (no generic host):
+
+- **Program.cs** — `ConfigurationBuilder` + `ServiceCollection`, delegates to `Startup`
+- **Startup.cs** — DI registration
+- **Application.cs** — business logic entry point
+
+### BlazorChat (Blazor Server UI)
+
+Interactive Server rendering with `IAntropicClient` as Singleton (conversation persists for the app lifetime), streaming via SSE, and a configuration panel backed by browser `localStorage`.
+
+### PromptEvaluator (console app)
+
+Generic host (`IHostBuilder`) setup. All services registered as **Transient** so each test case evaluation gets a fresh, context-free `AnthropicClient`.
+
+**Core components:**
+- **Program.cs** — `IHostBuilder` with config and `Startup`
+- **Startup.cs** — DI registration
+- **Application.cs** — loads `Data/prompt.yaml` + `Data/dataset.json`, drives evaluation, writes reports
+
+**Evaluation flow:**
+1. `{key}` placeholders in `prompt.yaml` filled from each dataset entry's `prompt_inputs` → Claude call → raw output
+2. Second Claude call (LLM-as-judge, `temperature=0`) scores the output 1–10 against per-case criteria
+3. Aggregated results written to `Data/output.json` (raw JSON) and `Data/output.html` (self-contained HTML report)
+
+**Configuration (`appsettings.json` → `"Evaluator"` section):**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `DatasetFile` | `Data/dataset.json` | Path to the evaluation dataset (linked from `python/dataset.json`) |
+| `PromptFile` | `Data/prompt.yaml` | Path to the prompt-under-test YAML |
+| `JsonOutputFile` | `Data/output.json` | Raw results output path |
+| `HtmlOutputFile` | `Data/output.html` | HTML report output path |
+| `MaxConcurrentTasks` | `3` | Bounded concurrency for parallel API calls |
+
+### Environment Strategy (all projects)
+
+- **Production** (Default): High-quality responses with Sonnet model
 - **Development**: Fast iteration with cost-effective Haiku model
-- **ASP.NET Core Compatible**: Matches WebHost/HostBuilder default behavior
 - **Automatic switching**: Based on `ASPNETCORE_ENVIRONMENT` variable
 
 ## 🔑 Configuration
@@ -178,7 +214,7 @@ Response time: ~800ms
 ## 🛠 Development
 
 - Uses modern **.slnx** solution format
-- Configured for **C# 13** with **.NET 10.0**
+- Configured for **C# 14** with **.NET 10.0**
 - **Environment-based configuration**:
   - Production: `claude-sonnet-4-5` (high quality, default)
   - Development: `claude-haiku-4-5` (fast, cost-effective)
@@ -200,12 +236,41 @@ dotnet run
 ```
 dotnet/
 ├── Claude with Anthropic API.slnx  # Solution file (.slnx format)
-└── AnthropicApiClient/             # Console application
-    ├── AnthropicApiClient.csproj
-    ├── Program.cs                  # Entry point with environment detection
-    ├── Application.cs              # Main business logic
-    ├── AnthropicClient.cs          # API client implementation
-    ├── Startup.cs                  # DI configuration
+├── AnthropicShared/                # Shared class library
+│   ├── AnthropicClient.cs          # HTTP client implementation
+│   ├── AnthropicOptions.cs         # Typed configuration model
+│   ├── IAntropicClient.cs          # Conversation interface
+│   └── _usings.cs                  # Global using directives
+├── AnthropicApiClient/             # Console application
+│   ├── Application.cs              # Main business logic
+│   ├── Program.cs                  # Entry point
+│   ├── Startup.cs                  # DI configuration
+│   ├── appsettings.json            # Production configuration (Sonnet)
+│   └── appsettings.Development.json # Development configuration (Haiku)
+├── BlazorChat/                     # Blazor Server chat UI
+│   ├── Pages/Home.razor(.cs)       # Chat page with streaming
+│   ├── Components/                 # Chat history, input, config panel
+│   ├── Services/                   # Stream progress, user settings, options
+│   ├── appsettings.json            # Production configuration (Sonnet)
+│   └── appsettings.Development.json # Development configuration (Haiku)
+└── PromptEvaluator/                # Prompt evaluation console app
+    ├── Application.cs              # Entry point: load → evaluate → report
+    ├── Program.cs                  # IHostBuilder setup
+    ├── Startup.cs                  # DI registration (all Transient)
+    ├── Data/
+    │   ├── prompt.yaml             # Prompt under test (task + template + criteria)
+    │   ├── dataset.json            # Linked from ../../python/dataset.json
+    │   ├── output.json             # Raw EvaluationResult[] (generated)
+    │   └── output.html             # HTML report (generated)
+    ├── Models/
+    │   ├── EvaluationResult.cs     # Output + TestCase + Score + Reasoning
+    │   ├── EvaluatorOptions.cs     # Typed config from "Evaluator" section
+    │   ├── GradeResult.cs          # Grader LLM response (score, strengths, weaknesses)
+    │   ├── PromptConfig.cs         # YAML prompt definition
+    │   └── TestCase.cs             # One dataset entry (scenario, inputs, criteria)
+    ├── Services/
+    │   ├── PromptEvaluatorService.cs  # Concurrent evaluation pipeline
+    │   └── ReportGenerator.cs         # HTML report builder
     ├── appsettings.json            # Production configuration (Sonnet)
     └── appsettings.Development.json # Development configuration (Haiku)
 ```

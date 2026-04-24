@@ -15,25 +15,30 @@ This project demonstrates how to integrate with the Anthropic Claude API using b
 ## 📁 Project Structure
 
 ```
-├── python/                     # Python implementation
-│   ├── README.md              # Python-specific documentation
-│   ├── claude_client.py       # Shared Python client utilities
-│   ├── examples.py            # Example conversation script
-│   ├── chat_cli.py            # Interactive terminal chat
-│   ├── .env                   # Environment variables (API key)
-│   └── .venv/                 # Virtual environment
-├── dotnet/                     # .NET implementation
-│   ├── README.md              # .NET-specific documentation
-│   ├── Claude with Anthropic API.slnx  # Solution file (.slnx format)
-│   └── AnthropicApiClient/    # Console application
-│       ├── AnthropicApiClient.csproj
-│       ├── Program.cs         # Entry point with environment detection
-│       ├── Application.cs     # Main business logic
-│       ├── AnthropicClient.cs # API client implementation
-│       ├── Startup.cs         # DI configuration
-│       ├── appsettings.json   # Production configuration (Sonnet)
-│       └── appsettings.Development.json # Development configuration (Haiku)
-└── README.md                  # This file
+├── python/                             # Python implementation
+│   ├── README.md                      # Python-specific documentation
+│   ├── claude_client.py               # Stateful SDK client with context management
+│   ├── anthropic_client.py            # Stateless SDK wrapper
+│   ├── anthropic_config.py            # Config singleton (lazy env var loading)
+│   ├── grader.py                      # LLM-as-judge grader helper
+│   ├── prompt_runner.py               # Prompt template runner
+│   ├── examples.py                    # Example conversation script
+│   ├── chat_cli.py                    # Interactive terminal chat
+│   ├── 001-requests.ipynb             # Raw HTTP calls (no SDK)
+│   ├── 002-prompt-evaluation.ipynb    # End-to-end evaluation pipeline
+│   ├── 003_dataset_generator.ipynb    # Dataset generation via Claude
+│   ├── 003_prompting.ipynb            # Prompting technique experiments
+│   ├── dataset.json                   # Evaluation dataset (shared with .NET)
+│   ├── .env                           # Environment variables (API key)
+│   └── .venv/                         # Virtual environment
+├── dotnet/                             # .NET implementation
+│   ├── README.md                      # .NET-specific documentation
+│   ├── Claude with Anthropic API.slnx # Solution file (.slnx format)
+│   ├── AnthropicShared/               # Shared class library
+│   ├── AnthropicApiClient/            # Console application
+│   ├── BlazorChat/                    # Blazor Server chat UI
+│   └── PromptEvaluator/               # Prompt evaluation console app
+└── README.md                          # This file
 ```
 
 ## 🐍 Python Implementation
@@ -59,20 +64,33 @@ python examples.py
 
 ## 🔷 .NET Implementation
 
-Enterprise-grade console application with modern .NET patterns and environment-based configuration.
+Enterprise-grade .NET projects with modern patterns and environment-based configuration.
 
 **Key Features:**
-- .NET 10.0 with C# 13
-- Dependency Injection & IOptions pattern
+- .NET 10.0 with C# 14
+- Dependency Injection & IOptions / IOptionsMonitor pattern
 - Environment-based configuration (Development/Production)
 - Structured logging & HTTP client factory
-- ASP.NET Core compatible architecture
+- Blazor Server streaming chat UI
+- Prompt evaluation with LLM-as-judge grading
 
-**Quick Start:**
+**Projects:**
+- **AnthropicApiClient** — console app demonstrating basic API usage
+- **BlazorChat** — Blazor Server chat UI with real-time SSE streaming
+- **PromptEvaluator** — console app: YAML prompts, JSON datasets, HTML reports
+
+**Quick Start (AnthropicApiClient):**
 ```bash
 cd dotnet
 dotnet user-secrets set "Anthropic:ApiKey" "your-key" --project AnthropicApiClient
 dotnet run --project AnthropicApiClient
+```
+
+**Quick Start (PromptEvaluator):**
+```bash
+cd dotnet
+dotnet user-secrets set "Anthropic:ApiKey" "your-key" --project PromptEvaluator
+dotnet run --project PromptEvaluator
 ```
 
 📖 **[Complete .NET Documentation][dotnet-readme]**
