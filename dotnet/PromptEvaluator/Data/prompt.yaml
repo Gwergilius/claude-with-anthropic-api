@@ -8,13 +8,15 @@ prompt: |
   * Goal: {goal}
   * Dietary restrictions: {restrictions}
 
-  Guidelines:
-  1. Include accurate daily calorie amount.
-  2. Show protein, fat, and carb amounts.
-  3. Specify when to eat each meal.
-  4. Use only foods that fit the dietary restrictions.
-  5. List all portion sizes in grams.
-  6. Keep budget-friendly if mentioned.
+  Follow these steps:
+  1. Calculate daily calorie needs based on the athlete's height, weight, and goal.
+  2. Figure  out protein, fat, and carbohydrate needs based on the calorie needs and dietary restrictions.
+  3. Plan meal timing around workouts.
+  4. Choose foods that fit the restrictions.
+  5. Set portion sizes in grams.
+  6. Adjust for budget if needed.
+
+  Respond only with the final meal plan, no reasoning or intermediate steps.
 
 extraCriteria: |
   The output should include:
