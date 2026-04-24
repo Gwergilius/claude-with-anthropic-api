@@ -8,8 +8,4 @@ prompt: |
   * Goal: {goal}
   * Dietary restrictions: {restrictions}
 
-extraCriteria: |
-  The output should include:
-  * Daily caloric total
-  * Macronutrient breakdown  
-  * Meals with exact foods, portions, and timing  
+
