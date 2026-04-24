@@ -1,0 +1,50 @@
+[
+  {
+    "prompt_inputs": {
+      "height": "198",
+      "weight": "95",
+      "goal": "Strength and muscle gain for basketball season",
+      "restrictions": "None"
+    },
+    "solution_criteria": [
+      "Plan is compact (5-6 meals max) and fits on a single page",
+      "Macronutrient ratios align with strength training (1.6-2.2g protein per kg bodyweight)",
+      "Pre- and post-workout meals are strategically timed within 1-2 hours of training",
+      "Total daily calories support muscle gain (maintenance + 300-500 surplus)"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single athlete",
+    "scenario": "Testing with a standard strength-training athlete (basketball player) with no restrictions but specific macronutrient needs to validate that the compact plan prioritizes nutrient timing around workouts and maintains proper macro ratios"
+  },
+  {
+    "prompt_inputs": {
+      "height": "160",
+      "weight": "55",
+      "goal": "muscle building",
+      "restrictions": "none"
+    },
+    "solution_criteria": [
+      "Meal plan contains 4-5 eating occasions spread throughout the day",
+      "Total daily protein is 90-110g (1.6-2.0g per kg body weight)",
+      "Total daily calories are 2200-2400 (40-44 kcal per kg for muscle gain without excess bulk)",
+      "Meals are described as light, nutrient-dense, and avoid heavy/bloating foods unsuitable for climbing"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single athlete",
+    "scenario": "Testing with a lightweight athlete in a weight-sensitive sport (rock climber, 160cm, 55kg) with a muscle-building goal to ensure the meal plan balances sufficient calories and protein without excessive volume or heaviness"
+  },
+  {
+    "prompt_inputs": {
+      "height": "178",
+      "weight": "68",
+      "goal": "Marathon training - high-performance endurance athlete requiring 3000+ calories daily with optimal carb-to-protein ratio for recovery",
+      "restrictions": "Vegan and gluten-free"
+    },
+    "solution_criteria": [
+      "Meal plan includes minimum 3 vegan protein sources (legumes, tofu, nuts, seeds) meeting ~90g daily protein requirement",
+      "All meals and snacks are explicitly gluten-free with no cross-contamination risks",
+      "Caloric density supports 3000+ calorie intake across 4-5 meals/snacks in compact format",
+      "Carbohydrate-rich options included for endurance fuel with digestible, low-fiber pre-run meals"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single athlete",
+    "scenario": "Testing with a high-performance endurance athlete (marathon runner) with multiple dietary restrictions (vegan and gluten-free) to verify the meal plan accounts for protein sources, caloric density, and digestibility within compact format"
+  }
+]

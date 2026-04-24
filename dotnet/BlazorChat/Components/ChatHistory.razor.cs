@@ -1,6 +1,3 @@
-using AnthropicShared;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 
 namespace BlazorChat.Components;
 

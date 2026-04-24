@@ -1,11 +1,10 @@
-using FluentResults;
 
 namespace AnthropicShared;
 
 public interface IAntropicClient : IDisposable
 {
     IEnumerable<AnthropicMessage> Context { get; }
-    Task<Result<string>> SendMessage(string message, string? systemPrompt = null);
+    Task<Result<string>> SendMessage(string message, string? systemPrompt = null, double? temperatureOverride = null);
 
     /// <summary>
     /// Sends a streaming request (SSE). On HTTP success, appends an empty assistant message to context

@@ -1,31 +1,32 @@
+using PromptEvaluator.Models;
+using PromptEvaluator.Services;
 
-namespace AnthropicApiClient;
+namespace PromptEvaluator;
 
 public class Startup(IConfiguration configuration)
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        // Configure logging
-        services.AddLogging(builder =>
-        {
-            builder.AddConsole();
-            builder.AddConfiguration(configuration.GetSection("Logging"));
-        });
-        
-        // Configure options
         services.AddOptions<AnthropicOptions>()
             .Bind(configuration.GetSection(AnthropicOptions.SectionName))
             .ValidateOnStart();
-        
-        // Register HttpClientFactory
+
+        services.AddOptions<EvaluatorOptions>()
+            .Bind(configuration.GetSection(EvaluatorOptions.SectionName));
+
         services.AddHttpClient();
 
         services.AddSingleton<IAnthropicRequestTelemetry, NullAnthropicRequestTelemetry>();
-        
-        // Register AnthropicClient as a service
+
+        // Transient so each scope created by PromptEvaluatorService gets a fresh, context-free client.
         services.AddTransient<IAntropicClient, AnthropicClient>();
-        
-        // Register Application
+
+        services.AddTransient<PromptEvaluatorService>();
         services.AddTransient<Application>();
+    }
+
+    public void Configure(IHost host)
+    {
+        // No middleware pipeline for console apps.
     }
 }

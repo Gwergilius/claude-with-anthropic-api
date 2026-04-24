@@ -5,7 +5,16 @@
       "Skill(run)",
       "Skill(run:*)",
       "Bash(taskkill /F /IM dotnet.exe)",
-      "Bash(taskkill //F //IM dotnet.exe)"
+      "Bash(taskkill //F //IM dotnet.exe)",
+      "Bash(gh pr create --title 'feat\\(blazor\\): stream AI responses via SSE' --body ':*)",
+      "Read(//c/Drives/T/Trainings/AI/Claude with Anthropic API/python/**)",
+      "Read(//d/OneDrive - Personal/OneDrive/Source/Trainings/AI/Claude with Anthropic API/python/**)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Drives\\T\\Trainings\\AI\\Claude with Anthropic API\\python",
+      "D:\\OneDrive - Personal\\OneDrive\\Source\\Trainings\\AI\\Claude with Anthropic API\\python"
     ]
   }
 }

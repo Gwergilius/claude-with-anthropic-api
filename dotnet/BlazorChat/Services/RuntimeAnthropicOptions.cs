@@ -1,6 +1,3 @@
-using System.Text.Json;
-using AnthropicShared;
-using Microsoft.Extensions.Options;
 
 namespace BlazorChat.Services;
 
