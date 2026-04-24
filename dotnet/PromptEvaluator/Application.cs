@@ -8,6 +8,8 @@ namespace PromptEvaluator;
 public class Application(
     PromptEvaluatorService evaluatorService,
     IOptions<EvaluatorOptions> evaluatorOptions,
+    IOptions<AnthropicOptions> anthropicOptions,
+    IHostEnvironment hostEnvironment,
     ILogger<Application> logger)
 {
     private static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
@@ -20,6 +22,10 @@ public class Application(
     public async Task Run()
     {
         var opts = evaluatorOptions.Value;
+
+        logger.LogInformation(
+            "Environment: {Environment} | Model: {Model}",
+            hostEnvironment.EnvironmentName, anthropicOptions.Value.Model);
 
         var promptConfig = LoadYaml<PromptConfig>(opts.PromptFile);
         var dataset = LoadJson<List<TestCase>>(opts.DatasetFile);
