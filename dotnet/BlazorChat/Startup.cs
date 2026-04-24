@@ -1,7 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using AnthropicShared;
 using BlazorChat.Services;
-using Microsoft.Extensions.Options;
 
 namespace BlazorChat;
 
@@ -44,5 +41,21 @@ public class Startup(IConfiguration configuration)
         services.AddSingleton<IAntropicClient, AnthropicClient>();
 
         services.AddScoped<IAnthropicStreamProgressService, AnthropicStreamProgressService>();
+    }
+
+    public void Configure(WebApplication app, IWebHostEnvironment env)
+    {
+        if (!env.IsDevelopment())
+        {
+            app.UseExceptionHandler("/Error");
+            app.UseHsts();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseAntiforgery();
+
+        app.MapRazorComponents<BlazorChat.App>()
+           .AddInteractiveServerRenderMode();
     }
 }

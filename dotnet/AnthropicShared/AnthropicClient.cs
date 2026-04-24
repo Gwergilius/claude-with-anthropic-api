@@ -1,9 +1,3 @@
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using FluentResults;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AnthropicShared;
 
@@ -39,7 +33,7 @@ public class AnthropicClient(
         return httpClient;
     }
 
-    public async Task<Result<string>> SendMessage(string message, string? systemPrompt = null)
+    public async Task<Result<string>> SendMessage(string message, string? systemPrompt = null, double? temperatureOverride = null)
     {
         var config = optionsMonitor.CurrentValue;
 
@@ -53,7 +47,7 @@ public class AnthropicClient(
         {
             Model = config.Model,
             MaxTokens = config.MaxTokens,
-            Temperature = config.Temperature,
+            Temperature = temperatureOverride ?? config.Temperature,
             Messages = _context,
             System = effectiveSystem
         };

@@ -1,6 +1,3 @@
-using AnthropicShared;
-using FluentResults;
-using Microsoft.Extensions.Logging;
 
 namespace AnthropicApiClient;
 

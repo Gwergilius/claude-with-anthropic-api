@@ -1,0 +1,11 @@
+global using System.ComponentModel.DataAnnotations;
+global using System.Text;
+global using System.Text.Json;
+global using AnthropicShared;
+global using FluentResults;
+global using Markdig;
+global using Microsoft.AspNetCore.Components;
+global using Microsoft.AspNetCore.Components.Web;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
+global using Microsoft.JSInterop;

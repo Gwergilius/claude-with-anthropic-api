@@ -4,18 +4,6 @@ var startup = new BlazorChat.Startup(builder.Configuration);
 startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseAntiforgery();
-
-app.MapRazorComponents<BlazorChat.App>()
-   .AddInteractiveServerRenderMode();
+startup.Configure(app, app.Environment);
 
 app.Run();

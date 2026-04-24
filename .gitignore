@@ -12,6 +12,9 @@ __pycache__
 # Local-only JSON overrides (machine paths, secrets, CLI allowlists)
 *.local.json
 
+# Claude Code IDE settings (permissions, allowlists — machine-specific)
+.claude/settings.json
+
 # .NET build artifacts
 bin/
 obj/
