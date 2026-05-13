@@ -146,7 +146,25 @@ The following table shows the quality improvements of the [prompt.yaml](Data/pro
 **Observations:**
 - The "athlete" → "person" change showed **no consistent improvement** on the original 3 test cases (83% → 83% on first re-run, 83% → 90% on second re-run)
 - Test case scores varied significantly between runs (e.g., Rock climber: 10 → 8 → 10), indicating **measurement noise exceeds potential bias removal effect**
-- The 88% score in v6 is primarily attributable to adding a 4th test case (non-athlete), not the terminology change
+- The 85% score in v6 is primarily attributable to adding a 4th test case (non-athlete), not the terminology change
+
+**Test-case specific variability analysis:**
+
+Across four evaluation runs, Test-2 (Rock climber, 160cm, 55kg, muscle building) exhibited the highest variability:
+
+| Test Case | Run 1 | Run 2 | Run 3 | Run 4 | Pattern |
+|-----------|-------|-------|-------|-------|---------|
+| Test-1: Basketball player | 6 | 7 | 7 | 7 | Stabilized at 7/10 |
+| **Test-2: Rock climber** | **10** | **8** | **10** | **9** | **High variance (±0.95)** |
+| Test-3: Marathon runner | 9 | 10 | 10 | 10 | Stabilized at 10/10 |
+| Test-4: Diabetic engineer | — | — | 8 | 8 | Stable at 8/10 |
+
+**Why Test-2 is more unstable:**
+1. **Subjective criteria** — Requirements like "light, nutrient-dense" and "avoid heavy/bloating foods unsuitable for climbing" are **qualitative judgments**, allowing more interpretative freedom for both the model and the grader
+2. **Contradictory goals** — The test case contains inherent tension: "muscle building" (typically requires caloric surplus) vs. "weight-sensitive sport" (requires low body weight) vs. "light meals" vs. "2200-2400 calories" — this ambiguity may be resolved differently across runs
+3. **Edge case characteristics** — Smallest test subject (55kg), sport-specific constraints (climbing), making this the least "standard" case in the dataset with higher uncertainty
+
+**Key insight:** Variability is a **useful signal** — it identifies which test cases are "boundary cases" where prompt refinement would yield the highest value. Test-2's instability suggests the prompt could benefit from clearer guidance on balancing conflicting goals in weight-sensitive sports.
 
 **Recommendations for rigorous evaluation:**
 1. **Multiple measurements per version** — Run each configuration 10+ times and compute mean ± standard deviation
