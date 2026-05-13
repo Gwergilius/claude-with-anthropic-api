@@ -107,6 +107,24 @@ Generic host (`IHostBuilder`) setup. All services registered as **Transient** so
 | `HtmlOutputFile` | `Data/output.html` | HTML report output path |
 | `MaxConcurrentTasks` | `3` | Bounded concurrency for parallel API calls |
 
+## 📊 Prompt Quality Evolution
+
+The following table shows the quality improvements of the [prompt.yaml](Data/prompt.yaml) file across iterations, measured by the PromptEvaluator against a standardized test dataset:
+
+| Version | Changes | Score |
+|---------|---------|-------|
+| 1 | Initial version | 47% |
+| 2 | Improve task description + add Extra criteria | 77% |
+| 3 | Add specificity guideline | 77% |
+| 4 | Chain-of-thought steps with output constraint | 70% |
+| 5 | Structure with XML tag | 80% |
+
+**Key learnings:**
+- Adding explicit criteria (v2) yielded the largest improvement (+30 percentage points)
+- Further specificity (v3) maintained quality without degradation
+- Chain-of-thought approach (v4) unexpectedly decreased performance (-7 percentage points), suggesting over-constraining may reduce model flexibility — reverted
+- XML tag structure (v5, based on v3) improved performance by +3 percentage points over v3, achieving a new high score of 80%
+
 ### Environment Strategy (all projects)
 
 - **Production** (Default): High-quality responses with Sonnet model

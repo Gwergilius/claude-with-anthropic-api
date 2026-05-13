@@ -3,10 +3,12 @@ taskDescription: Recommend foods and a diet plan tailored to a person's height, 
 prompt: |
   Generate a one-day meal plan for an athlete that meets their dietary restrictions.  
 
+  <athlete-info>
   * Height: {height}
   * Weight: {weight}
   * Goal: {goal}
   * Dietary restrictions: {restrictions}
+  </athlete-info>
 
   Guidelines:
   1. Include accurate daily calorie amount.
