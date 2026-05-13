@@ -46,5 +46,21 @@
     ],
     "task_description": "Write a compact, concise 1 day meal plan for a single athlete",
     "scenario": "Testing with a high-performance endurance athlete (marathon runner) with multiple dietary restrictions (vegan and gluten-free) to verify the meal plan accounts for protein sources, caloric density, and digestibility within compact format"
+  },
+  {
+    "prompt_inputs": {
+      "height": "173",
+      "weight": "90",
+      "goal": "Lose weight from 90 kg to 85 kg in 10 weeks",
+      "restrictions": "Type 2 diabetes - max 180g carbohydrates per day"
+    },
+    "solution_criteria": [
+      "Daily carbohydrate intake strictly limited to 180g or less",
+      "Carbohydrates distributed evenly across meals (low glycemic index foods preferred)",
+      "Moderate caloric deficit supporting ~0.5-0.7 kg weight loss per week (total daily calories 1800-2000 kcal)",
+      "Adequate protein (80-100g) to preserve muscle mass during weight loss for sedentary lifestyle"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single person",
+    "scenario": "Testing with a non-athlete sedentary person (65 years old, engineer/IT worker with desk job, type 2 diabetes) to ensure the meal plan accounts for strict carbohydrate restriction, diabetes management with stable blood sugar, and moderate caloric deficit for safe weight loss"
   }
 ]

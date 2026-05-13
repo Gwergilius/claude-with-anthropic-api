@@ -111,19 +111,51 @@ Generic host (`IHostBuilder`) setup. All services registered as **Transient** so
 
 The following table shows the quality improvements of the [prompt.yaml](Data/prompt.yaml) file across iterations, measured by the PromptEvaluator against a standardized test dataset:
 
-| Version | Changes | Score |
-|---------|---------|-------|
-| 1 | Initial version | 47% |
-| 2 | Improve task description + add Extra criteria | 77% |
-| 3 | Add specificity guideline | 77% |
-| 4 | Chain-of-thought steps with output constraint | 70% |
-| 5 | Structure with XML tag | 80% |
+| Version | Changes | Dataset | Score |
+|---------|---------|---------|-------|
+| 1 | Initial version | 3 athletes | 47% |
+| 2 | Improve task description + add Extra criteria | 3 athletes | 77% |
+| 3 | Add specificity guideline | 3 athletes | 77% |
+| 4 | Chain-of-thought steps with output constraint | 3 athletes | 70% |
+| 5 | Structure with XML tag (`<athlete-info>`) | 3 athletes | 80% |
+| 6 | Generalize: `athlete` → `person`, `<athlete-info>` → `<person-info>` + add 4th test case (non-athlete) | 4 cases (3 athletes + 1 sedentary diabetic) | 85% |
 
 **Key learnings:**
 - Adding explicit criteria (v2) yielded the largest improvement (+30 percentage points)
 - Further specificity (v3) maintained quality without degradation
 - Chain-of-thought approach (v4) unexpectedly decreased performance (-7 percentage points), suggesting over-constraining may reduce model flexibility — reverted
-- XML tag structure (v5, based on v3) improved performance by +3 percentage points over v3, achieving a new high score of 80%
+- XML tag structure (v5, based on v3) improved performance by +3 percentage points over v3
+- Generalizing to "person" (v6) with expanded dataset improved score to 85% (+5 percentage points over v5)
+
+### ⚠️ Methodological Notes
+
+**Non-deterministic behavior:**
+- Claude (and all LLM agents) exhibit **non-deterministic behavior** — identical prompts and inputs can produce different outputs across runs
+- The LLM-as-judge grader also introduces variability in scoring
+- Current measurements use **claude-haiku-4-5** in Development mode; Production uses Sonnet, which may yield different results
+
+**Controlled experiment (v5 vs v6 on same 3 test cases):**
+
+| Test Case | v5 (athlete) | v6a (person, run 1) | v6a (person, run 2) |
+|-----------|--------------|---------------------|---------------------|
+| Basketball player | 6/10 | 7/10 | 7/10 |
+| Rock climber | 10/10 | 8/10 | 10/10 |
+| Marathon runner | 9/10 | 10/10 | 10/10 |
+| **Average** | **83%** | **83%** | **90%** |
+
+**Observations:**
+- The "athlete" → "person" change showed **no consistent improvement** on the original 3 test cases (83% → 83% on first re-run, 83% → 90% on second re-run)
+- Test case scores varied significantly between runs (e.g., Rock climber: 10 → 8 → 10), indicating **measurement noise exceeds potential bias removal effect**
+- The 88% score in v6 is primarily attributable to adding a 4th test case (non-athlete), not the terminology change
+
+**Recommendations for rigorous evaluation:**
+1. **Multiple measurements per version** — Run each configuration 10+ times and compute mean ± standard deviation
+2. **Statistical significance testing** — Use t-test or similar to determine if differences are real vs. random variation
+3. **Larger test dataset** — More test cases reduce impact of per-case variance on overall score
+4. **Higher-quality models** — claude-sonnet-4-5 or opus variants may reduce output variability
+5. **Temperature control** — Set `temperature=0` for the grader to reduce scoring variance (though this doesn't eliminate non-determinism entirely)
+
+**Note:** This is a demonstration project; these methodological improvements are documented for educational purposes but not implemented here.
 
 ### Environment Strategy (all projects)
 
