@@ -40,30 +40,40 @@ public class Application(
         double avgScore = results.Count > 0 ? results.Average(r => r.Score) : 0;
         logger.LogInformation("Evaluation complete. Average score: {Score:F1}/10", avgScore);
 
+        var jsonPath = Path.IsPathRooted(opts.JsonOutputFile) 
+            ? opts.JsonOutputFile 
+            : Path.Combine(AppContext.BaseDirectory, opts.JsonOutputFile);
         var json = JsonSerializer.Serialize(results, JsonWriteOptions);
-        await File.WriteAllTextAsync(opts.JsonOutputFile, json);
-        logger.LogInformation("Results written to {File}", opts.JsonOutputFile);
+        await File.WriteAllTextAsync(jsonPath, json);
+        logger.LogInformation("Results written to {File}", jsonPath);
 
+        var htmlPath = Path.IsPathRooted(opts.HtmlOutputFile)
+            ? opts.HtmlOutputFile
+            : Path.Combine(AppContext.BaseDirectory, opts.HtmlOutputFile);
         var html = ReportGenerator.GenerateHtml(results);
-        await File.WriteAllTextAsync(opts.HtmlOutputFile, html, System.Text.Encoding.UTF8);
-        logger.LogInformation("HTML report written to {File}", opts.HtmlOutputFile);
+        await File.WriteAllTextAsync(htmlPath, html, System.Text.Encoding.UTF8);
+        logger.LogInformation("HTML report written to {File}", htmlPath);
     }
 
     private T LoadYaml<T>(string path)
     {
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"Required file not found: {path}", path);
+        var fullPath = Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
+        
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Required file not found: {fullPath}", fullPath);
 
-        return YamlDeserializer.Deserialize<T>(File.ReadAllText(path))
-            ?? throw new InvalidOperationException($"Failed to deserialize {path}");
+        return YamlDeserializer.Deserialize<T>(File.ReadAllText(fullPath))
+            ?? throw new InvalidOperationException($"Failed to deserialize {fullPath}");
     }
 
     private T LoadJson<T>(string path)
     {
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"Required file not found: {path}", path);
+        var fullPath = Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
+        
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Required file not found: {fullPath}", fullPath);
 
-        return JsonSerializer.Deserialize<T>(File.ReadAllText(path), JsonReadOptions)
-            ?? throw new InvalidOperationException($"Failed to deserialize {path}");
+        return JsonSerializer.Deserialize<T>(File.ReadAllText(fullPath), JsonReadOptions)
+            ?? throw new InvalidOperationException($"Failed to deserialize {fullPath}");
     }
 }
